@@ -281,8 +281,3 @@ npm run dev
 
 ---
 
-<div align="center">
-
-**Autor: Abrahan Villa**
-
-</div>
