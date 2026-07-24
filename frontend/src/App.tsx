@@ -5,11 +5,14 @@ import { useAuthStore } from './stores/authStore';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 
+// Cliente de React Query para manejo de caché y estado asíncrono
 const queryClient = new QueryClient();
 
+// Ruta protegida: redirige a /login si el usuario no está autenticado
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
 
+  // Mostrar spinner mientras se valida el token en /auth/me
   if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
@@ -18,6 +21,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   const checkAuth = useAuthStore((s) => s.checkAuth);
 
+  // Verificar token almacenado al montar la app (valida con /api/auth/me)
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
@@ -28,6 +32,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard/*" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          {/* Fallback: cualquier ruta desconocida redirige al dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>

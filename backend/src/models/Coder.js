@@ -1,35 +1,61 @@
-import mongoose from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
+import { readJSON, writeJSON } from './db.js';
 
-const coderSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Name is required'],
-    trim: true
+const FILE = 'coders.json';
+
+// Modelo de datos para Coders: CRUD sobre archivo JSON con IDs UUID v4
+const CoderModel = {
+  // Obtener todos los coders registrados
+  getAll() {
+    return readJSON(FILE);
   },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    lowercase: true,
-    trim: true
+
+  // Buscar coder por ID único
+  getById(id) {
+    return readJSON(FILE).find((c) => c.id === id) || null;
   },
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: 6
+
+  // Buscar coder por email (used para validación de registro duplicado)
+  getByEmail(email) {
+    return readJSON(FILE).find((c) => c.email === email) || null;
   },
-  clan: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Clan',
-    required: false
-  }
-}, {
-  timestamps: true
-});
 
-coderSchema.set('toJSON', { virtuals: true });
-coderSchema.set('toObject', { virtuals: true });
+  // Crear un nuevo coder con UUID 自动生成 y timestamps
+  create(data) {
+    const coders = readJSON(FILE);
+    const newCoder = {
+      id: uuidv4(),
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      clan: data.clan || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    coders.push(newCoder);
+    writeJSON(FILE, coders);
+    return newCoder;
+  },
 
-const Coder = mongoose.model('Coder', coderSchema);
+  // Actualizar campos de un coder existente por ID
+  update(id, data) {
+    const coders = readJSON(FILE);
+    const index = coders.findIndex((c) => c.id === id);
+    if (index === -1) return null;
+    coders[index] = { ...coders[index], ...data, updatedAt: new Date().toISOString() };
+    writeJSON(FILE, coders);
+    return coders[index];
+  },
 
-export default Coder;
+  // Eliminar un coder del array por ID
+  remove(id) {
+    const coders = readJSON(FILE);
+    const index = coders.findIndex((c) => c.id === id);
+    if (index === -1) return null;
+    const [deleted] = coders.splice(index, 1);
+    writeJSON(FILE, coders);
+    return deleted;
+  },
+};
+
+export default CoderModel;

@@ -1,65 +1,77 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import Coder from '../models/Coder.js';
-import TeamLeader from '../models/TeamLeader.js';
+import CoderModel from '../models/Coder.js';
+import TeamLeaderModel from '../models/TeamLeader.js';
+import ClanModel from '../models/Clan.js';
 
-const generateToken = (user, role) => {
-  return jwt.sign(
-    { id: user._id, email: user.email, role },
-    process.env.JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-};
+// Genera un token JWT con id, email y role del usuario, expira en 24h
+function generateToken(user, role) {
+  return jwt.sign({ id: user.id, email: user.email, role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+}
 
+// Elimina el campo password del objeto antes de retornarlo al cliente
+function sanitize(user) {
+  const { password, ...rest } = user;
+  return rest;
+}
+
+// Registro de usuario: verifica email único, hashea password y crea en el modelo correspondiente según rol
 export const register = async ({ name, email, password, role = 'coder' }) => {
-  const existingUser = await Coder.findOne({ email }) || await TeamLeader.findOne({ email });
-  if (existingUser) {
-    throw new Error('Email already registered');
-  }
+  const existing = CoderModel.getByEmail(email) || TeamLeaderModel.getByEmail(email);
+  if (existing) throw new Error('Email already registered');
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
   if (role === 'teamLeader' || role === 'admin') {
-    const tl = await TeamLeader.create({ name, email, password: hashedPassword, role });
+    const tl = TeamLeaderModel.create({ name, email, password: hashedPassword, role });
     const token = generateToken(tl, tl.role);
-    const { password: _, ...user } = tl.toJSON();
-    return { user, token };
+    return { user: sanitize(tl), token };
   }
 
-  const coder = await Coder.create({ name, email, password: hashedPassword });
+  const coder = CoderModel.create({ name, email, password: hashedPassword });
   const token = generateToken(coder, 'coder');
-  const { password: _, ...userData } = coder.toJSON();
-  return { user: userData, token };
+  return { user: sanitize(coder), token };
 };
 
+// Login: busca el email en ambos modelos, valida password con bcrypt y retorna token JWT
 export const login = async ({ email, password }) => {
-  let user = await Coder.findOne({ email });
+  let user = CoderModel.getByEmail(email);
   let role = 'coder';
 
   if (!user) {
-    user = await TeamLeader.findOne({ email });
+    user = TeamLeaderModel.getByEmail(email);
     role = user?.role || 'teamLeader';
   }
 
-  if (!user) {
-    throw new Error('Invalid credentials');
-  }
+  if (!user) throw new Error('Invalid credentials');
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new Error('Invalid credentials');
-  }
+  if (!isMatch) throw new Error('Invalid credentials');
 
   const token = generateToken(user, role);
-  const { password: _, ...userData } = user.toJSON();
-  return { user: userData, token };
+  return { user: sanitize(user), token };
 };
 
+// Retorna el perfil del usuario autenticado, enriquecido con datos del clan(s) asociado(s)
 export const getMe = async (userId, role) => {
   if (role === 'coder') {
-    const user = await Coder.findById(userId).select('-password').populate('clan', 'name');
-    return user;
+    const user = CoderModel.getById(userId);
+    if (!user) return null;
+    const s = sanitize(user);
+    // Adjunta información resumida del clan al que pertenece el coder
+    if (s.clan) {
+      const clan = ClanModel.getById(s.clan);
+      s.clan = clan ? { id: clan.id, name: clan.name } : null;
+    }
+    return s;
   }
-  const user = await TeamLeader.findById(userId).select('-password').populate('clans', 'name');
-  return user;
+
+  const user = TeamLeaderModel.getById(userId);
+  if (!user) return null;
+  const s = sanitize(user);
+  // Filtra y adjunta la lista de clans que lidera este usuario
+  s.clans = ClanModel.getAll()
+    .filter((c) => c.teamLeader === s.id)
+    .map((c) => ({ id: c.id, name: c.name }));
+  return s;
 };

@@ -1,0 +1,11 @@
+[
+  {
+    "id": "f5dbf6c9-4343-470c-b6fd-6a9464df764f",
+    "name": "Admin",
+    "email": "admin@test.com",
+    "password": "$2b$10$GBBJe6Jk6cz9SYIrH4SbDOEweTNWFfw4y2zoohwpP4AG1kxgF2.UW",
+    "role": "admin",
+    "createdAt": "2026-07-23T21:13:03.120Z",
+    "updatedAt": "2026-07-23T21:13:03.121Z"
+  }
+]

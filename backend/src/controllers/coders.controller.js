@@ -1,5 +1,6 @@
 import * as codersService from '../services/coders.service.js';
 
+// GET /coders - Obtener todos los coders
 export const getAll = async (req, res) => {
   try {
     const coders = await codersService.getAll();
@@ -9,6 +10,7 @@ export const getAll = async (req, res) => {
   }
 };
 
+// GET /coders/:id - Obtener un coder por ID
 export const getById = async (req, res) => {
   try {
     const coder = await codersService.getById(req.params.id);
@@ -19,6 +21,7 @@ export const getById = async (req, res) => {
   }
 };
 
+// POST /coders - Crear un nuevo coder (requiere rol teamLeader o admin)
 export const create = async (req, res) => {
   try {
     const coder = await codersService.create(req.body);
@@ -28,6 +31,7 @@ export const create = async (req, res) => {
   }
 };
 
+// PUT /coders/:id - Actualizar un coder existente
 export const update = async (req, res) => {
   try {
     const coder = await codersService.update(req.params.id, req.body);
@@ -37,6 +41,7 @@ export const update = async (req, res) => {
   }
 };
 
+// DELETE /coders/:id - Eliminar un coder y limpiar referencias en clans
 export const remove = async (req, res) => {
   try {
     await codersService.remove(req.params.id);

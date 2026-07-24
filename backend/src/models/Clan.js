@@ -1,34 +1,61 @@
-import mongoose from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
+import { readJSON, writeJSON } from './db.js';
 
-const clanSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Clan name is required'],
-    unique: true,
-    trim: true
+const FILE = 'clans.json';
+
+// Modelo de datos para Clans: CRUD sobre archivo JSON con IDs UUID v4
+const ClanModel = {
+  // Obtener todos los registros
+  getAll() {
+    return readJSON(FILE);
   },
-  description: {
-    type: String,
-    default: ''
+
+  // Buscar un clan por su ID único
+  getById(id) {
+    return readJSON(FILE).find((c) => c.id === id) || null;
   },
-  teamLeader: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'TeamLeader',
-    required: false
-  }
-}, {
-  timestamps: true
-});
 
-clanSchema.virtual('coders', {
-  ref: 'Coder',
-  localField: '_id',
-  foreignField: 'clan'
-});
+  // Buscar un clan por nombre (used para validación de duplicados)
+  getByName(name) {
+    return readJSON(FILE).find((c) => c.name === name) || null;
+  },
 
-clanSchema.set('toJSON', { virtuals: true });
-clanSchema.set('toObject', { virtuals: true });
+  // Crear un nuevo clan con UUID 自动生成, timestamps y valores por defecto
+  create(data) {
+    const clans = readJSON(FILE);
+    const newClan = {
+      id: uuidv4(),
+      name: data.name,
+      description: data.description || '',
+      teamLeader: data.teamLeader || null,
+      coders: data.coders || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    clans.push(newClan);
+    writeJSON(FILE, clans);
+    return newClan;
+  },
 
-const Clan = mongoose.model('Clan', clanSchema);
+  // Actualizar un clan existente por ID, aplicando merge de campos
+  update(id, data) {
+    const clans = readJSON(FILE);
+    const index = clans.findIndex((c) => c.id === id);
+    if (index === -1) return null;
+    clans[index] = { ...clans[index], ...data, updatedAt: new Date().toISOString() };
+    writeJSON(FILE, clans);
+    return clans[index];
+  },
 
-export default Clan;
+  // Eliminar un clan por ID del array y persistir el cambio
+  remove(id) {
+    const clans = readJSON(FILE);
+    const index = clans.findIndex((c) => c.id === id);
+    if (index === -1) return null;
+    const [deleted] = clans.splice(index, 1);
+    writeJSON(FILE, clans);
+    return deleted;
+  },
+};
+
+export default ClanModel;

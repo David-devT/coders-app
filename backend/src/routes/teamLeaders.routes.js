@@ -5,9 +5,10 @@ import { authorize } from '../middleware/role.middleware.js';
 
 const router = Router();
 
+// Todas las rutas requieren autenticación + rol admin exclusivamente
 router.use(authenticate);
 
-router.get('/', authorize('admin'), getAll);
+router.get('/', authorize('admin'), getAll);        // CRUD completo restringido a admin
 router.get('/:id', authorize('admin'), getById);
 router.post('/', authorize('admin'), create);
 router.put('/:id', authorize('admin'), update);

@@ -1,5 +1,6 @@
 import * as teamLeadersService from '../services/teamLeaders.service.js';
 
+// GET /team-leaders - Obtener todos los team leaders (solo admin)
 export const getAll = async (req, res) => {
   try {
     const teamLeaders = await teamLeadersService.getAll();
@@ -9,6 +10,7 @@ export const getAll = async (req, res) => {
   }
 };
 
+// GET /team-leaders/:id - Obtener un team leader por ID (solo admin)
 export const getById = async (req, res) => {
   try {
     const tl = await teamLeadersService.getById(req.params.id);
@@ -19,6 +21,7 @@ export const getById = async (req, res) => {
   }
 };
 
+// POST /team-leaders - Crear un nuevo team leader (solo admin)
 export const create = async (req, res) => {
   try {
     const tl = await teamLeadersService.create(req.body);
@@ -28,6 +31,7 @@ export const create = async (req, res) => {
   }
 };
 
+// PUT /team-leaders/:id - Actualizar un team leader existente (solo admin)
 export const update = async (req, res) => {
   try {
     const tl = await teamLeadersService.update(req.params.id, req.body);
@@ -37,6 +41,7 @@ export const update = async (req, res) => {
   }
 };
 
+// DELETE /team-leaders/:id - Eliminar un team leader y desasociar de sus clans (solo admin)
 export const remove = async (req, res) => {
   try {
     await teamLeadersService.remove(req.params.id);

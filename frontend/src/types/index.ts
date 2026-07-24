@@ -1,37 +1,44 @@
+// Interfaces TypeScript para el dominio de la aplicación
+
+// Coder: miembro de un clan con datos básicos y referencia a clan asignado
 export interface Coder {
-  _id: string;
+  id: string;
   name: string;
   email: string;
-  clan?: Clan;
+  clan?: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
 }
 
+// Clan: unidad organizativa con líder opcional y lista de coders asignados
 export interface Clan {
-  _id: string;
+  id: string;
   name: string;
   description?: string;
-  teamLeader?: TeamLeader;
-  coders?: Coder[];
+  teamLeader?: { id: string; name: string; email: string } | null;
+  coders?: { id: string; name: string; email: string }[];
   createdAt: string;
   updatedAt: string;
 }
 
+// TeamLeader: usuario con privilegios de gestión de clans (role: teamLeader | admin)
 export interface TeamLeader {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   role: 'teamLeader' | 'admin';
-  clans?: Clan[];
+  clans?: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
 }
 
+// Respuesta de autenticación: usuario + token JWT
 export interface AuthResponse {
   user: Coder | TeamLeader;
   token: string;
 }
 
+// Wrapper genérico de respuesta API con status ok y datos tipados
 export interface ApiResponse<T> {
   ok: boolean;
   data: T;

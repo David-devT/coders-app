@@ -1,9 +1,11 @@
 import axios from 'axios';
 
+// Instancia centralizada de Axios con base URL /api (proxy a backend en dev)
 const api = axios.create({
   baseURL: '/api',
 });
 
+// Interceptor de request: inyecta token JWT del localStorage en cada petición
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -12,6 +14,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor de response: en caso de 401 limpia token y redirige al login
 api.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -1,5 +1,6 @@
 import * as clansService from '../services/clans.service.js';
 
+// GET /clans - Obtener todos los clans
 export const getAll = async (req, res) => {
   try {
     const clans = await clansService.getAll();
@@ -9,6 +10,7 @@ export const getAll = async (req, res) => {
   }
 };
 
+// GET /clans/:id - Obtener un clan por ID
 export const getById = async (req, res) => {
   try {
     const clan = await clansService.getById(req.params.id);
@@ -19,6 +21,7 @@ export const getById = async (req, res) => {
   }
 };
 
+// POST /clans - Crear un nuevo clan
 export const create = async (req, res) => {
   try {
     const clan = await clansService.create(req.body);
@@ -28,6 +31,7 @@ export const create = async (req, res) => {
   }
 };
 
+// PUT /clans/:id - Actualizar un clan existente
 export const update = async (req, res) => {
   try {
     const clan = await clansService.update(req.params.id, req.body);
@@ -37,6 +41,7 @@ export const update = async (req, res) => {
   }
 };
 
+// DELETE /clans/:id - Eliminar un clan y desasociar sus coders
 export const remove = async (req, res) => {
   try {
     await clansService.remove(req.params.id);

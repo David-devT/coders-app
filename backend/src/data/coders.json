@@ -1,0 +1,11 @@
+[
+  {
+    "id": "a472580e-cb12-4690-87df-1afe2ad5da5a",
+    "name": "David",
+    "email": "david@gmail.test",
+    "password": "$2b$10$U8HiaUsOmULb1MML4YevX.TLpEuZha/ljgPJW3u25YGNgfkwOoJRe",
+    "clan": null,
+    "createdAt": "2026-07-24T21:04:35.901Z",
+    "updatedAt": "2026-07-24T21:04:35.902Z"
+  }
+]
