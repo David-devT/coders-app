@@ -57,11 +57,31 @@ export const update = async (req, res) => {
   }
 };
 
-// DELETE /tasks/:id - Eliminar una tarea
+// DELETE /tasks/:id - Eliminar una tarea (soft delete, solo admin)
 export const remove = async (req, res) => {
   try {
     await tasksService.remove(req.params.id);
     res.status(200).json({ ok: true, data: null });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
+
+// GET /tasks/deleted - Obtener tareas eliminadas (solo admin)
+export const getDeleted = async (req, res) => {
+  try {
+    const tasks = await tasksService.getDeleted();
+    res.status(200).json({ ok: true, data: tasks });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+};
+
+// POST /tasks/:id/restore - Restaurar una tarea eliminada (solo admin)
+export const restore = async (req, res) => {
+  try {
+    const task = await tasksService.restore(req.params.id);
+    res.status(200).json({ ok: true, data: task });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }

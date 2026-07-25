@@ -7,6 +7,7 @@ interface TaskColumnProps {
   tasks: Task[];
   colorClass: string;
   onStatusChange: (taskId: string, status: TaskStatus) => void;
+  onDelete?: (taskId: string) => void;
 }
 
 // Iconos de estado por columna
@@ -17,7 +18,7 @@ const statusIcons: Record<TaskStatus, string> = {
   rejected: '❌',
 };
 
-export default function TaskColumn({ title, status, tasks, colorClass, onStatusChange }: TaskColumnProps) {
+export default function TaskColumn({ title, status, tasks, colorClass, onStatusChange, onDelete }: TaskColumnProps) {
   return (
     <div className="flex-1 min-w-[280px]">
       {/* Header de columna */}
@@ -41,6 +42,7 @@ export default function TaskColumn({ title, status, tasks, colorClass, onStatusC
               key={task.id}
               task={task}
               onStatusChange={onStatusChange}
+              onDelete={onDelete}
             />
           ))
         )}

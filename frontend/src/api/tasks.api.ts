@@ -33,9 +33,21 @@ export const tasksApi = {
     return data.data;
   },
 
-  // DELETE /api/tasks/:id - Eliminar una tarea
+  // DELETE /api/tasks/:id - Eliminar una tarea (soft delete, solo admin)
   remove: async (id: string) => {
     const { data } = await api.delete<ApiResponse<null>>(`/tasks/${id}`);
+    return data.data;
+  },
+
+  // GET /api/tasks/deleted - Obtener tareas eliminadas (solo admin)
+  getDeleted: async () => {
+    const { data } = await api.get<ApiResponse<Task[]>>('/tasks/deleted');
+    return data.data;
+  },
+
+  // POST /api/tasks/:id/restore - Restaurar una tarea eliminada (solo admin)
+  restore: async (id: string) => {
+    const { data } = await api.post<ApiResponse<Task>>(`/tasks/${id}/restore`);
     return data.data;
   },
 };

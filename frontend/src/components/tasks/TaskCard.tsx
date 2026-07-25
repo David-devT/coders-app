@@ -1,13 +1,14 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, User, ChevronRight, CheckCircle2, XCircle, Pin } from 'lucide-react';
+import { Clock, User, ChevronRight, CheckCircle2, XCircle, Pin, Trash2 } from 'lucide-react';
 import type { Task, TaskStatus } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
 
 interface TaskCardProps {
   task: Task;
   onStatusChange: (taskId: string, status: TaskStatus) => void;
+  onDelete?: (taskId: string) => void;
 }
 
 // Colores y estilos por prioridad
@@ -31,11 +32,12 @@ const priorityLabels = {
   high: 'High',
 };
 
-export default function TaskCard({ task, onStatusChange }: TaskCardProps) {
+export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardProps) {
   const user = useAuthStore((s) => s.user);
   const isAdmin = 'role' in (user || {}) && (user as { role: string }).role === 'admin';
   const isTeamLeader = 'role' in (user || {}) && (user as { role: string }).role === 'teamLeader';
-  const canValidate = isAdmin || isTeamLeader;
+  // Solo admin y teamLeader pueden cambiar estados de tareas
+  const canEdit = isAdmin || isTeamLeader;
 
   // Formatear fecha
   const formatDate = (dateStr: string) => {
@@ -47,16 +49,29 @@ export default function TaskCard({ task, onStatusChange }: TaskCardProps) {
     <Card className={`bg-card/60 border-border hover:border-neon-cyan/30 transition-all duration-200 group ${priorityBorder[task.priority]}`}>
       <CardContent className="p-3">
         <div className="space-y-2">
-          {/* Header: Prioridad + Fecha */}
+          {/* Header: Prioridad + Fecha + Botón eliminar (admin) */}
           <div className="flex items-center justify-between">
             <Badge variant="outline" className={`text-xs ${priorityStyles[task.priority]}`}>
               {task.priority === 'high' && <Pin className="w-3 h-3 mr-1" />}
               {priorityLabels[task.priority]}
             </Badge>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {formatDate(task.createdAt)}
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {formatDate(task.createdAt)}
+              </span>
+              {/* Botón eliminar: solo visible para admin */}
+              {isAdmin && onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-5 h-5 hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onDelete(task.id)}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Título */}
@@ -77,9 +92,10 @@ export default function TaskCard({ task, onStatusChange }: TaskCardProps) {
             <span>{task.assignee?.name || 'Unassigned'}</span>
           </div>
 
-          {/* Acciones según estado */}
+          {/* Acciones según estado: solo admin y teamLeader pueden cambiar estados */}
           <div className="flex items-center gap-2 pt-1">
-            {task.status === 'pending' && (
+            {/* "Mark for Review": solo admin/teamLeader en tareas pendientes */}
+            {task.status === 'pending' && canEdit && (
               <Button
                 size="sm"
                 variant="outline"
@@ -91,7 +107,15 @@ export default function TaskCard({ task, onStatusChange }: TaskCardProps) {
               </Button>
             )}
 
-            {task.status === 'review' && canValidate && (
+            {/* Tarea pendiente vista por coder: sin acciones, solo informativo */}
+            {task.status === 'pending' && !canEdit && (
+              <span className="text-xs text-muted-foreground italic w-full text-center">
+                Pending...
+              </span>
+            )}
+
+            {/* Approve/Reject: solo admin/teamLeader en tareas en revisión */}
+            {task.status === 'review' && canEdit && (
               <>
                 <Button
                   size="sm"
@@ -114,12 +138,14 @@ export default function TaskCard({ task, onStatusChange }: TaskCardProps) {
               </>
             )}
 
-            {task.status === 'review' && !canValidate && (
+            {/* Tarea en revisión vista por coder: sin acciones */}
+            {task.status === 'review' && !canEdit && (
               <span className="text-xs text-muted-foreground italic w-full text-center">
                 Pending validation...
               </span>
             )}
 
+            {/* Tarea aprobada: solo informativo para todos */}
             {task.status === 'approved' && (
               <span className="text-xs text-neon-green flex items-center gap-1 w-full justify-center">
                 <CheckCircle2 className="w-3 h-3" />
@@ -127,6 +153,7 @@ export default function TaskCard({ task, onStatusChange }: TaskCardProps) {
               </span>
             )}
 
+            {/* Tarea rechazada: solo informativo para todos */}
             {task.status === 'rejected' && (
               <span className="text-xs text-destructive flex items-center gap-1 w-full justify-center">
                 <XCircle className="w-3 h-3" />

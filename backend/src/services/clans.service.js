@@ -31,16 +31,33 @@ export const getById = async (id) => {
   return clan ? enrich(clan) : null;
 };
 
-// Crear un clan validando unicidad de nombre
+// Crear un clan validando unicidad de nombre y límite de 2 clans por team leader
 export const create = async ({ name, description, teamLeader }) => {
   const existing = ClanModel.getByName(name);
   if (existing) throw new Error('Clan name already exists');
 
+  // Validar que el team leader no tenga ya 2 o más clans
+  if (teamLeader) {
+    const allClans = ClanModel.getAll();
+    const tlClans = allClans.filter((c) => c.teamLeader === teamLeader);
+    if (tlClans.length >= 2) {
+      throw new Error('Team Leader can only lead a maximum of 2 clans');
+    }
+  }
+
   return ClanModel.create({ name, description, teamLeader });
 };
 
-// Actualizar un clan existente; retorna null si no se encuentra
+// Actualizar un clan existente; valida límite de 2 clans si se cambia el team leader
 export const update = async (id, data) => {
+  if (data.teamLeader) {
+    const allClans = ClanModel.getAll();
+    const tlClans = allClans.filter((c) => c.teamLeader === data.teamLeader && c.id !== id);
+    if (tlClans.length >= 2) {
+      throw new Error('Team Leader can only lead a maximum of 2 clans');
+    }
+  }
+
   const clan = ClanModel.update(id, data);
   if (!clan) throw new Error('Clan not found');
   return enrich(clan);

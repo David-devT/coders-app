@@ -32,4 +32,16 @@ export const teamLeadersApi = {
     const { data } = await api.delete<ApiResponse<null>>(`/team-leaders/${id}`);
     return data.data;
   },
+
+  // POST /api/team-leaders/promote - Promover un coder a team leader
+  promote: async (coderId: string) => {
+    const { data } = await api.post<ApiResponse<TeamLeader>>('/team-leaders/promote', { coderId });
+    return data.data;
+  },
+
+  // POST /api/team-leaders/demote - Degradar un team leader a coder
+  demote: async (tlId: string) => {
+    const { data } = await api.post<ApiResponse<Record<string, unknown>>>('/team-leaders/demote', { tlId });
+    return data.data;
+  },
 };

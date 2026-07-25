@@ -6,11 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Pencil, Trash2, Plus, Search } from 'lucide-react';
 import CoderForm from './CoderForm';
 import DeleteCoderDialog from './DeleteCoderDialog';
+import { useAuthStore } from '../../stores/authStore';
 import type { Coder } from '../../types';
 
 // Tabla de coders con búsqueda, creación, edición y eliminación
+// Solo admin y teamLeader pueden crear, editar y eliminar coders.
+// Los coders solo pueden ver la lista.
 export default function CodersTable() {
   const { coders, createCoder, updateCoder, deleteCoder } = useCoders();
+  const user = useAuthStore((s) => s.user);
+  // Un coder es un usuario sin campo 'role' o con role === 'coder'
+  const isCoder = !('role' in (user || {})) || (user as { role?: string }).role === 'coder';
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedCoder, setSelectedCoder] = useState<Coder | null>(null);
@@ -49,9 +55,12 @@ export default function CodersTable() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Coders</h1>
-        <Button onClick={() => setFormOpen(true)} className="bg-neon-cyan text-background hover:bg-neon-cyan/90">
-          <Plus className="w-4 h-4 mr-2" /> Add Coder
-        </Button>
+        {/* Botón "Add Coder": solo visible para admin y teamLeader */}
+        {!isCoder && (
+          <Button onClick={() => setFormOpen(true)} className="bg-neon-cyan text-background hover:bg-neon-cyan/90">
+            <Plus className="w-4 h-4 mr-2" /> Add Coder
+          </Button>
+        )}
       </div>
 
       {/* Campo de búsqueda */}
@@ -79,13 +88,14 @@ export default function CodersTable() {
                 <TableHead className="text-muted-foreground">Name</TableHead>
                 <TableHead className="text-muted-foreground">Email</TableHead>
                 <TableHead className="text-muted-foreground">Clan</TableHead>
-                <TableHead className="text-muted-foreground text-right">Actions</TableHead>
+                {/* Columna "Actions": solo visible para admin y teamLeader */}
+                {!isCoder && <TableHead className="text-muted-foreground text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isCoder ? 4 : 5} className="text-center text-muted-foreground py-8">
                     No coders found
                   </TableCell>
                 </TableRow>
@@ -104,26 +114,29 @@ export default function CodersTable() {
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="hover:text-neon-cyan hover:bg-neon-cyan/10"
-                          onClick={() => { setSelectedCoder(coder); setFormOpen(true); }}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => { setSelectedCoder(coder); setDeleteOpen(true); }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {/* Botones editar/eliminar: solo visible para admin y teamLeader */}
+                    {!isCoder && (
+                      <TableCell className="text-right">
+                        <div className="flex gap-1 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hover:text-neon-cyan hover:bg-neon-cyan/10"
+                            onClick={() => { setSelectedCoder(coder); setFormOpen(true); }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => { setSelectedCoder(coder); setDeleteOpen(true); }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}

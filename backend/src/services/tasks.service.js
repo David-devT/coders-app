@@ -126,9 +126,24 @@ export const update = async (id, data) => {
   return enrich(task);
 };
 
-// Eliminar una tarea
+// Eliminar una tarea (soft delete: marca como deleted en lugar de borrar)
 export const remove = async (id) => {
   const task = TaskModel.remove(id);
   if (!task) throw new Error('Task not found');
   return task;
+};
+
+// Obtener todas las tareas eliminadas (solo admin)
+export const getDeleted = async () => {
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+  return TaskModel.getDeleted()
+    .map(enrich)
+    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+};
+
+// Restaurar una tarea eliminada (marca deleted como false)
+export const restore = async (id) => {
+  const task = TaskModel.restore(id);
+  if (!task) throw new Error('Deleted task not found');
+  return enrich(task);
 };

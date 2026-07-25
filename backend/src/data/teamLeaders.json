@@ -7,5 +7,14 @@
     "role": "admin",
     "createdAt": "2026-07-23T21:13:03.120Z",
     "updatedAt": "2026-07-23T21:13:03.121Z"
+  },
+  {
+    "id": "5b067cc8-1d54-4fe7-bc4f-45f1cb6f384c",
+    "name": "David",
+    "email": "david@gmail.test",
+    "password": "$2b$10$U8HiaUsOmULb1MML4YevX.TLpEuZha/ljgPJW3u25YGNgfkwOoJRe",
+    "role": "teamLeader",
+    "createdAt": "2026-07-25T21:37:58.626Z",
+    "updatedAt": "2026-07-25T21:37:58.626Z"
   }
 ]

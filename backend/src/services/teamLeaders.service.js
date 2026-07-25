@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import TeamLeaderModel from '../models/TeamLeader.js';
+import CoderModel from '../models/Coder.js';
 import ClanModel from '../models/Clan.js';
 
 // Elimina password del objeto antes de retornar al cliente
@@ -66,4 +67,71 @@ export const remove = async (id) => {
   }
 
   return tl;
+};
+
+// Promover un coder a team leader: crea un TL con los datos del coder y elimina el coder
+export const promote = async (coderId) => {
+  const coder = CoderModel.getById(coderId);
+  if (!coder) throw new Error('Coder not found');
+
+  // Verificar que el email no esté ya registrado como team leader
+  const existing = TeamLeaderModel.getByEmail(coder.email);
+  if (existing) throw new Error('Email already registered as team leader');
+
+  // Crear team leader con los datos del coder (se preserva la contraseña hasheada)
+  const tl = TeamLeaderModel.create({
+    name: coder.name,
+    email: coder.email,
+    password: coder.password,
+    role: 'teamLeader',
+  });
+
+  // Eliminar el coder promovido
+  CoderModel.remove(coderId);
+
+  // Desasociar al coder de su clan si tenía uno
+  if (coder.clan) {
+    const clan = ClanModel.getById(coder.clan);
+    if (clan && clan.coders?.length) {
+      ClanModel.update(clan.id, {
+        coders: clan.coders.filter((cId) => cId !== coderId),
+      });
+    }
+  }
+
+  return enrich(tl);
+};
+
+// Degradar un team leader a coder: crea un coder con los datos del TL y elimina el TL
+export const demote = async (tlId) => {
+  const tl = TeamLeaderModel.getById(tlId);
+  if (!tl) throw new Error('Team Leader not found');
+
+  // No permitir degradar a un admin
+  if (tl.role === 'admin') throw new Error('Cannot demote an admin');
+
+  // Verificar que el email no esté ya registrado como coder
+  const existing = CoderModel.getByEmail(tl.email);
+  if (existing) throw new Error('Email already registered as coder');
+
+  // Crear coder con los datos del team leader (se preserva la contraseña hasheada)
+  const coder = CoderModel.create({
+    name: tl.name,
+    email: tl.email,
+    password: tl.password,
+    clan: null,
+  });
+
+  // Desasociar al team leader de todos sus clans antes de eliminarlo
+  const clans = ClanModel.getAll();
+  for (const clan of clans) {
+    if (clan.teamLeader === tlId) {
+      ClanModel.update(clan.id, { teamLeader: null });
+    }
+  }
+
+  // Eliminar el team leader
+  TeamLeaderModel.remove(tlId);
+
+  return coder;
 };

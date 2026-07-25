@@ -32,5 +32,24 @@ export const useTeamLeaders = () => {
     },
   });
 
-  return { teamLeaders, createTeamLeader, updateTeamLeader, deleteTeamLeader };
+  // Mutación: promover coder a team leader -> invalida ambas cachés
+  const promoteCoder = useMutation({
+    mutationFn: teamLeadersApi.promote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teamLeaders'] });
+      queryClient.invalidateQueries({ queryKey: ['coders'] });
+    },
+  });
+
+  // Mutación: degradar team leader a coder -> invalida ambas cachés
+  const demoteTL = useMutation({
+    mutationFn: teamLeadersApi.demote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teamLeaders'] });
+      queryClient.invalidateQueries({ queryKey: ['coders'] });
+      queryClient.invalidateQueries({ queryKey: ['clans'] });
+    },
+  });
+
+  return { teamLeaders, createTeamLeader, updateTeamLeader, deleteTeamLeader, promoteCoder, demoteTL };
 };

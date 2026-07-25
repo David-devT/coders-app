@@ -50,3 +50,23 @@ export const remove = async (req, res) => {
     res.status(400).json({ ok: false, message: error.message });
   }
 };
+
+// POST /team-leaders/promote - Promover un coder a team leader (solo admin)
+export const promote = async (req, res) => {
+  try {
+    const tl = await teamLeadersService.promote(req.body.coderId);
+    res.status(201).json({ ok: true, data: tl });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
+
+// POST /team-leaders/demote - Degradar un team leader a coder (solo admin)
+export const demote = async (req, res) => {
+  try {
+    const coder = await teamLeadersService.demote(req.body.tlId);
+    res.status(200).json({ ok: true, data: coder });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
