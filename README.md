@@ -167,8 +167,8 @@ coders-app/
 ## Flujo de Autenticación
 
 ```
-┌─────────┐      POST /auth/login       ┌─────────┐
-│  Client │ ───────────────────────────► │  API    │
+┌─────────┐      POST /auth/login        ┌─────────┐
+│  Client │ ─────────────────────-─────► │  API    │
 │         │                              │         │
 │         │ ◄─────────────────────────── │         │
 │         │      { user, token (JWT) }   │         │

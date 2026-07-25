@@ -38,6 +38,21 @@ export interface AuthResponse {
   token: string;
 }
 
+// Tarea: unidad de trabajo asignada a un coder, con estados de validación
+export type TaskStatus = 'pending' | 'review' | 'approved' | 'rejected';
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: 'low' | 'medium' | 'high';
+  assignee?: { id: string; name: string; email: string } | null;
+  clan?: { id: string; name: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Wrapper genérico de respuesta API con status ok y datos tipados
 export interface ApiResponse<T> {
   ok: boolean;

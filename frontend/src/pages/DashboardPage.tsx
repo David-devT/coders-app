@@ -3,6 +3,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import CodersTable from '../components/coders/CodersTable';
 import ClansTable from '../components/clans/ClansTable';
 import TeamLeadersTable from '../components/teamLeaders/TeamLeadersTable';
+import TaskBoard from '../components/tasks/TaskBoard';
 
 // Página principal del dashboard: anida rutas dentro del layout con sidebar
 export default function DashboardPage() {
@@ -13,6 +14,7 @@ export default function DashboardPage() {
         <Route index element={<Navigate to="coders" replace />} />
         <Route path="coders" element={<CodersTable />} />
         <Route path="clans" element={<ClansTable />} />
+        <Route path="tasks" element={<TaskBoard />} />
         <Route path="team-leaders" element={<TeamLeadersTable />} />
       </Route>
     </Routes>

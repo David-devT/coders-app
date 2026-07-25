@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '@/components/ui/button';
-import { Code, Shield, Users, LogOut } from 'lucide-react';
+import { Code, Shield, Users, ListTodo, LogOut } from 'lucide-react';
 
 // Sidebar de navegación: muestra links según rol del usuario y opción de logout
 export default function Sidebar() {
@@ -20,6 +20,7 @@ export default function Sidebar() {
   const links = [
     { to: '/dashboard/coders', label: 'Coders', icon: Code },
     { to: '/dashboard/clans', label: 'Clans', icon: Shield },
+    { to: '/dashboard/tasks', label: 'Tasks', icon: ListTodo },
     { to: '/dashboard/team-leaders', label: 'Team Leaders', icon: Users, adminOnly: true },
   ];
 

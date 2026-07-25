@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.routes.js';
 import codersRoutes from './routes/coders.routes.js';
 import clansRoutes from './routes/clans.routes.js';
 import teamLeadersRoutes from './routes/teamLeaders.routes.js';
+import tasksRoutes from './routes/tasks.routes.js';
 
 // Resolución de __dirname en módulos ESM
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/coders', codersRoutes);
 app.use('/api/clans', clansRoutes);
 app.use('/api/team-leaders', teamLeadersRoutes);
+app.use('/api/tasks', tasksRoutes);
 
 // Servir el build estático del frontend en producción
 const publicDir = path.join(__dirname, '../../frontend/dist');
