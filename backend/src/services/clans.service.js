@@ -2,6 +2,19 @@ import ClanModel from '../models/Clan.js';
 import TeamLeaderModel from '../models/TeamLeader.js';
 import CoderModel from '../models/Coder.js';
 
+// Campos permitidos para crear/actualizar un clan (previene inyección de campos extra)
+const ALLOWED_CREATE = ['name', 'description', 'teamLeader', 'coders'];
+const ALLOWED_UPDATE = ['name', 'description', 'teamLeader', 'coders'];
+
+// Filtra un objeto dejando solo las claves permitidas
+function pickAllowed(data, allowed) {
+  const result = {};
+  for (const key of allowed) {
+    if (data[key] !== undefined) result[key] = data[key];
+  }
+  return result;
+}
+
 // Enriquece un clan sustituyendo IDs de teamLeader y coders por objetos con datos resumidos
 function enrich(clan) {
   const result = { ...clan };
@@ -48,17 +61,20 @@ export const create = async ({ name, description, teamLeader }) => {
   return ClanModel.create({ name, description, teamLeader });
 };
 
-// Actualizar un clan existente; valida límite de 2 clans si se cambia el team leader
+// Actualizar un clan existente; valida límite de 2 clans si se cambia el team leader.
+// Solo se permiten campos seguros (whitelist).
 export const update = async (id, data) => {
-  if (data.teamLeader) {
+  const safe = pickAllowed(data, ALLOWED_UPDATE);
+
+  if (safe.teamLeader) {
     const allClans = ClanModel.getAll();
-    const tlClans = allClans.filter((c) => c.teamLeader === data.teamLeader && c.id !== id);
+    const tlClans = allClans.filter((c) => c.teamLeader === safe.teamLeader && c.id !== id);
     if (tlClans.length >= 2) {
       throw new Error('Team Leader can only lead a maximum of 2 clans');
     }
   }
 
-  const clan = ClanModel.update(id, data);
+  const clan = ClanModel.update(id, safe);
   if (!clan) throw new Error('Clan not found');
   return enrich(clan);
 };

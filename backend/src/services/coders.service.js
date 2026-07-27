@@ -2,6 +2,19 @@ import bcrypt from 'bcryptjs';
 import CoderModel from '../models/Coder.js';
 import ClanModel from '../models/Clan.js';
 
+// Campos permitidos para crear/actualizar un coder (previene inyección de campos extra)
+const ALLOWED_CREATE = ['name', 'email', 'password', 'clan'];
+const ALLOWED_UPDATE = ['name', 'email', 'password', 'clan'];
+
+// Filtra un objeto dejando solo las claves permitidas
+function pickAllowed(data, allowed) {
+  const result = {};
+  for (const key of allowed) {
+    if (data[key] !== undefined) result[key] = data[key];
+  }
+  return result;
+}
+
 // Elimina password del objeto antes de enviar al cliente
 function sanitize(user) {
   const { password, ...rest } = user;
@@ -39,16 +52,18 @@ export const create = async ({ name, email, password, clan }) => {
   return enrich(coder);
 };
 
-// Actualizar coder: hashea nueva contraseña si se proporciona, o la omite
+// Actualizar coder: hashea nueva contraseña si se proporciona, o la omite.
+// Solo se permiten campos seguros (whitelist).
 export const update = async (id, data) => {
-  if (data.password) {
-    data.password = await bcrypt.hash(data.password, 10);
+  const safe = pickAllowed(data, ALLOWED_UPDATE);
+
+  if (safe.password) {
+    safe.password = await bcrypt.hash(safe.password, 10);
   } else {
-    // Evitar sobrescribir el hash existente con undefined
-    delete data.password;
+    delete safe.password;
   }
 
-  const coder = CoderModel.update(id, data);
+  const coder = CoderModel.update(id, safe);
   if (!coder) throw new Error('Coder not found');
   return enrich(coder);
 };

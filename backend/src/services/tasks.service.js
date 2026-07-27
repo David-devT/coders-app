@@ -3,6 +3,18 @@ import CoderModel from '../models/Coder.js';
 import TeamLeaderModel from '../models/TeamLeader.js';
 import ClanModel from '../models/Clan.js';
 
+// Campos permitidos para actualizar una tarea (previene inyección de campos extra)
+const ALLOWED_UPDATE = ['title', 'description', 'priority', 'assigneeId', 'clanId'];
+
+// Filtra un objeto dejando solo las claves permitidas
+function pickAllowed(data, allowed) {
+  const result = {};
+  for (const key of allowed) {
+    if (data[key] !== undefined) result[key] = data[key];
+  }
+  return result;
+}
+
 // Buscar un usuario (coder o teamLeader) por ID
 function findUser(userId) {
   let user = CoderModel.getById(userId);
@@ -81,12 +93,26 @@ export const create = async ({ title, description, priority, assigneeId, clanId 
   return TaskModel.create({ title, description, priority, assigneeId, clanId });
 };
 
-// Actualizar estado de una tarea con validación de permisos
+// Transiciones de estado válidas: pending->review, review->approved/rejected, rejected->pending
+const VALID_TRANSITIONS = {
+  pending: ['review'],
+  review: ['approved', 'rejected'],
+  rejected: ['pending'],
+  approved: [],
+};
+
+// Actualizar estado de una tarea con validación de permisos y transiciones
 export const updateStatus = async (id, status, userId, role) => {
   const task = TaskModel.getById(id);
   if (!task) throw new Error('Task not found');
 
-  // Validar transiciones permitidas
+  // Validar que el estado destino sea válido
+  const allowed = VALID_TRANSITIONS[task.status];
+  if (!allowed || !allowed.includes(status)) {
+    throw new Error(`Cannot transition from '${task.status}' to '${status}'`);
+  }
+
+  // Validar permisos según el estado destino
   if (status === 'review') {
     // Solo el assignee puede marcar como "en revisión"
     if (task.assigneeId !== userId && role !== 'admin') {
@@ -119,9 +145,10 @@ export const updateStatus = async (id, status, userId, role) => {
   return enrich(TaskModel.update(id, { status }));
 };
 
-// Actualizar una tarea existente; retorna null si no se encuentra
+// Actualizar una tarea existente; solo campos seguros (whitelist).
 export const update = async (id, data) => {
-  const task = TaskModel.update(id, data);
+  const safe = pickAllowed(data, ALLOWED_UPDATE);
+  const task = TaskModel.update(id, safe);
   if (!task) throw new Error('Task not found');
   return enrich(task);
 };

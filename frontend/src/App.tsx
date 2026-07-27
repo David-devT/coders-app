@@ -5,8 +5,16 @@ import { useAuthStore } from './stores/authStore';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 
-// Cliente de React Query para manejo de caché y estado asíncrono
-const queryClient = new QueryClient();
+// Cliente de React Query para manejo de caché y estado asíncrono.
+// staleTime: 30s evita re-fetches innecarios al navegar entre páginas.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Ruta protegida: redirige a /login si el usuario no está autenticado
 function ProtectedRoute({ children }: { children: React.ReactNode }) {

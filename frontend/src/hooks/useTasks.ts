@@ -5,7 +5,8 @@ import type { TaskStatus } from '../types';
 // Hook personalizado para operaciones CRUD de Tareas con React Query.
 // Incluye queries para tareas activas y eliminadas, y mutaciones para
 // crear, actualizar, eliminar (soft delete) y restaurar tareas.
-export const useTasks = () => {
+// @param showDeleted - Si es true, habilita la query de tareas eliminadas (lazy loading).
+export const useTasks = (showDeleted = false) => {
   const queryClient = useQueryClient();
 
   // Query: obtener lista de tareas activas (se cachea con key 'tasks')
@@ -14,10 +15,11 @@ export const useTasks = () => {
     queryFn: tasksApi.getAll,
   });
 
-  // Query: obtener tareas eliminadas (se cachea con key 'tasksDeleted')
+  // Query: obtener tareas eliminadas (lazy - solo se ejecuta cuando se abre el panel)
   const tasksDeleted = useQuery({
     queryKey: ['tasksDeleted'],
     queryFn: tasksApi.getDeleted,
+    enabled: showDeleted,
   });
 
   // Mutación: crear tarea → invalida caché de 'tasks'

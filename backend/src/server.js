@@ -28,6 +28,11 @@ app.use('/api/tasks', tasksRoutes);
 const publicDir = path.join(__dirname, '../../frontend/dist');
 app.use(express.static(publicDir));
 
+// Ruta 404 para endpoints de API no encontrados (antes del fallback SPA)
+app.use('/api', (req, res) => {
+  res.status(404).json({ ok: false, message: 'Endpoint not found' });
+});
+
 // Fallback SPA: cualquier ruta no API devuelve index.html
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));

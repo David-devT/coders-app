@@ -1,10 +1,11 @@
 import * as authService from '../services/auth.service.js';
 
-// Registro de usuario: extrae datos del body y delega al servicio
+// Registro de usuario: extrae name, email y password del body y delega al servicio.
+// El rol siempre es 'coder' (no se acepta role del body por seguridad).
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    const result = await authService.register({ name, email, password, role });
+    const { name, email, password } = req.body;
+    const result = await authService.register({ name, email, password });
     res.status(201).json({ ok: true, data: result });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });

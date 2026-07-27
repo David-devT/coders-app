@@ -15,19 +15,13 @@ function sanitize(user) {
   return rest;
 }
 
-// Registro de usuario: verifica email único, hashea password y crea en el modelo correspondiente según rol
-export const register = async ({ name, email, password, role = 'coder' }) => {
+// Registro de usuario público: solo permite crear cuentas con rol 'coder'.
+// Para crear team leaders o admins, usar los endpoints protegidos /api/team-leaders.
+export const register = async ({ name, email, password }) => {
   const existing = CoderModel.getByEmail(email) || TeamLeaderModel.getByEmail(email);
   if (existing) throw new Error('Email already registered');
 
   const hashedPassword = await bcrypt.hash(password, 10);
-
-  if (role === 'teamLeader' || role === 'admin') {
-    const tl = TeamLeaderModel.create({ name, email, password: hashedPassword, role });
-    const token = generateToken(tl, tl.role);
-    return { user: sanitize(tl), token };
-  }
-
   const coder = CoderModel.create({ name, email, password: hashedPassword });
   const token = generateToken(coder, 'coder');
   return { user: sanitize(coder), token };

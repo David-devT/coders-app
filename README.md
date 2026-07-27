@@ -119,6 +119,8 @@ coders-app/
 | Listar clans | ✅ | ✅ | ✅ |
 | Crear / Editar / Eliminar clans | ❌ | ✅ | ✅ |
 | Gestionar team leaders | ❌ | ❌ | ✅ |
+| Cambiar estado de tareas | ❌ | ✅ | ✅ |
+| Eliminar / Restaurar tareas | ❌ | ❌ | ✅ |
 
 ---
 
@@ -159,8 +161,23 @@ coders-app/
 | `GET` | `/api/team-leaders` | Listar todos | admin |
 | `GET` | `/api/team-leaders/:id` | Obtener por ID | admin |
 | `POST` | `/api/team-leaders` | Crear nuevo | admin |
+| `POST` | `/api/team-leaders/promote` | Promover coder a TL | admin |
+| `POST` | `/api/team-leaders/demote` | Degradar TL a coder | admin |
 | `PUT` | `/api/team-leaders/:id` | Actualizar | admin |
 | `DELETE` | `/api/team-leaders/:id` | Eliminar | admin |
+
+### Tasks
+
+| Método | Endpoint | Descripción | Rol requerido |
+|:------:|:---------|:------------|:-------------:|
+| `GET` | `/api/tasks` | Listar tareas (filtrado por rol) | Auth |
+| `GET` | `/api/tasks/deleted` | Tareas eliminadas (soft delete) | admin |
+| `GET` | `/api/tasks/:id` | Obtener por ID | Auth |
+| `POST` | `/api/tasks` | Crear nueva tarea | teamLeader, admin |
+| `PATCH` | `/api/tasks/:id/status` | Cambiar estado | teamLeader, admin |
+| `PUT` | `/api/tasks/:id` | Actualizar tarea | teamLeader, admin |
+| `POST` | `/api/tasks/:id/restore` | Restaurar tarea eliminada | admin |
+| `DELETE` | `/api/tasks/:id` | Eliminar (soft delete) | admin |
 
 ---
 
@@ -195,6 +212,54 @@ coders-app/
 
 ---
 
+## Flujo de Tareas (Task Board)
+
+```
+  ┌─────────┐    assignee marca     ┌──────────┐   teamLeader/admin    ┌──────────┐
+  │ PENDING │ ──────────────────►   │  REVIEW  │ ──────────────────►   │ APPROVED │
+  └─────────┘    "Mark for Review"  └──────────┘   Approve             └──────────┘
+                                                          │
+                                                          │ Reject
+                                                          ▼
+                                                     ┌──────────┐
+                                                     │ REJECTED │
+                                                     └──────────┘
+                                                          │
+                                                          │ Reopen (admin/TL)
+                                                          ▼
+                                                     ┌─────────┐
+                                                     │ PENDING │
+                                                     └─────────┘
+```
+
+- **Coders** solo pueden mover tareas de `pending` → `review`
+- **Team Leaders** y **Admins** pueden aprobar, rechazar o reabrir tareas
+- **Admins** pueden eliminar tareas (soft delete) y restaurarlas desde el panel de tareas eliminadas
+- Las tareas `approved` son estado final (no admiten transiciones)
+
+### Task Board Features
+
+| Característica | Descripción |
+|:---------------|:------------|
+| **Vista Kanban** | 4 columnas: Pending, In Review, Approved, Rejected |
+| **Filtrado por rol** | Coders ven solo sus tareas. TLs ven las de sus clans. Admins ven todas. |
+| **Prioridades** | High (rojo), Medium (amarillo), Low (verde) - ordenadas por defecto |
+| **Panel de eliminadas** | Admins pueden ver, restaurar o eliminar tareas permanentemente |
+| **Prioridades ancladas** | Tareas `high` tienen borde lateral rojo para destacar visualmente |
+
+---
+
+## Optimizaciones de Rendimiento
+
+| Optimización | Detalle |
+|:-------------|:--------|
+| **React Query staleTime** | Caché de 30s evita re-fetches innecarios al navegar entre páginas del dashboard. |
+| **Lazy loading de tareas eliminadas** | La query de tareas eliminadas solo se ejecuta cuando el admin abre el panel, no al montar el componente. |
+| **Desactivar refetchOnWindowFocus** | Evita requests adicionales al cambiar de pestaña del navegador. |
+| **Interceptores Axios** | El token se inyecta automáticamente en cada request y se limpia en respuestas 401, evitando tokens expirados. |
+
+---
+
 ## Persistencia
 
 Los datos se almacenan en **archivos JSON** dentro de `backend/src/data/`:
@@ -204,6 +269,7 @@ Los datos se almacenan en **archivos JSON** dentro de `backend/src/data/`:
 | `coders.json` | Coders |
 | `clans.json` | Clans |
 | `teamLeaders.json` | Team Leaders |
+| `tasks.json` | Tasks (incluye soft-deleted) |
 
 > Se incluye `config/db.js` preparado para migrar a **MongoDB** (Mongoose) en el futuro.
 
@@ -278,6 +344,9 @@ npm run dev
 | **Sanitización de passwords** | El campo `password` (hash bcrypt) nunca se retorna al cliente en ninguna respuesta API. |
 | **Cache invalidation** | React Query invalida caché de entidades relacionadas en cada mutación para mantener consistencia. |
 | **JWT stateless** | Tokens firmados con expiración de 24h. Sin refresh tokens - el usuario re-inicia sesión al expirar. |
+| **Validación de transiciones** | Las tareas siguen un flujo de estados estricto: pending → review → approved/rejected. No se permiten saltos ni retrocesos no válidos. |
+| **Soft delete** | Las tareas eliminadas se marcan como `deleted` en lugar de borrarse físicamente, permitiendo restauración por admin. |
+| **Respuestas API estandarizadas** | Todas las respuestas siguen el formato `{ ok: boolean, data: T, message?: string }` para consistencia en el cliente. |
 
 ---
 

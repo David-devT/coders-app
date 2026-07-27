@@ -19,7 +19,6 @@ const columns: { title: string; status: TaskStatus; colorClass: string }[] = [
 ];
 
 export default function TaskBoard() {
-  const { tasks, tasksDeleted, createTask, updateTaskStatus, deleteTask, restoreTask } = useTasks();
   const user = useAuthStore((s) => s.user);
   const isAdmin = 'role' in (user || {}) && (user as { role: string }).role === 'admin';
   const isTeamLeader = 'role' in (user || {}) && (user as { role: string }).role === 'teamLeader';
@@ -36,6 +35,9 @@ export default function TaskBoard() {
 
   // Estado del panel de tareas eliminadas
   const [showDeleted, setShowDeleted] = useState(false);
+
+  // Solo fetch tareas eliminadas cuando el panel está abierto (lazy loading)
+  const { tasks, tasksDeleted, createTask, updateTaskStatus, deleteTask, restoreTask } = useTasks(showDeleted);
 
   // Filtrar tareas por estado y ordenar por prioridad (high > medium > low)
   const priorityOrder = { high: 0, medium: 1, low: 2 };
