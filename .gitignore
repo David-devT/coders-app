@@ -16,12 +16,21 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
 # Environment variables
 .env
+.env.*
 backend/.env
+frontend/.env
+
+# Data files
+backend/src/data/
