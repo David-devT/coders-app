@@ -3,55 +3,65 @@ import { readJSON, writeJSON } from './db.js';
 
 const FILE = 'clans.json';
 
-// Modelo de datos para Clans: CRUD sobre archivo JSON con IDs UUID v4
 const ClanModel = {
-  // Obtener todos los registros
   getAll() {
     return readJSON(FILE);
   },
 
-  // Buscar un clan por su ID único
   getById(id) {
-    return readJSON(FILE).find((c) => c.id === id) || null;
+    if (!id) return null;
+    const clans = readJSON(FILE);
+    return clans.find((c) => c.id === id) || null;
   },
 
-  // Buscar un clan por nombre (used para validación de duplicados)
   getByName(name) {
-    return readJSON(FILE).find((c) => c.name === name) || null;
+    if (!name) return null;
+    const clans = readJSON(FILE);
+    const normalized = name.trim().toLowerCase();
+    return clans.find((c) => c.name && c.name.toLowerCase() === normalized) || null;
   },
 
-  // Crear un nuevo clan con UUID 自动生成, timestamps y valores por defecto
   create(data) {
     const clans = readJSON(FILE);
+    const now = new Date().toISOString();
     const newClan = {
-      id: uuidv4(),
-      name: data.name,
-      description: data.description || '',
+      id: data.id || uuidv4(),
+      name: data.name?.trim(),
+      description: data.description?.trim() || '',
       teamLeader: data.teamLeader || null,
-      coders: data.coders || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      coders: Array.isArray(data.coders) ? data.coders : [],
+      createdAt: data.createdAt || now,
+      updatedAt: data.updatedAt || now,
     };
     clans.push(newClan);
     writeJSON(FILE, clans);
     return newClan;
   },
 
-  // Actualizar un clan existente por ID, aplicando merge de campos
   update(id, data) {
     const clans = readJSON(FILE);
     const index = clans.findIndex((c) => c.id === id);
     if (index === -1) return null;
-    clans[index] = { ...clans[index], ...data, updatedAt: new Date().toISOString() };
+
+    const current = clans[index];
+    const updated = {
+      ...current,
+      ...data,
+      name: data.name !== undefined ? data.name.trim() : current.name,
+      description: data.description !== undefined ? data.description.trim() : current.description,
+      updatedAt: new Date().toISOString(),
+    };
+
+    clans[index] = updated;
     writeJSON(FILE, clans);
-    return clans[index];
+    return updated;
   },
 
-  // Eliminar un clan por ID del array y persistir el cambio
   remove(id) {
     const clans = readJSON(FILE);
     const index = clans.findIndex((c) => c.id === id);
     if (index === -1) return null;
+
     const [deleted] = clans.splice(index, 1);
     writeJSON(FILE, clans);
     return deleted;

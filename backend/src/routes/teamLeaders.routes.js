@@ -5,14 +5,13 @@ import { authorize } from '../middleware/role.middleware.js';
 
 const router = Router();
 
-// Todas las rutas requieren autenticación + rol admin exclusivamente
 router.use(authenticate);
 
-router.get('/', authorize('admin'), getAll);        // CRUD completo restringido a admin
+router.get('/', authorize('teamLeader', 'admin'), getAll);
 router.get('/:id', authorize('admin'), getById);
 router.post('/', authorize('admin'), create);
-router.post('/promote', authorize('admin'), promote);   // Promover coder a team leader
-router.post('/demote', authorize('admin'), demote);     // Degradar team leader a coder
+router.post('/promote', authorize('admin'), promote);
+router.post('/demote', authorize('admin'), demote);
 router.put('/:id', authorize('admin'), update);
 router.delete('/:id', authorize('admin'), remove);
 

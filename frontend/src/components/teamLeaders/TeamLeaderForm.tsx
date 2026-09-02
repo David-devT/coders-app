@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { TeamLeader } from '../../types';
 
-// Props del formulario de team leader (crear o editar)
 interface TeamLeaderFormProps {
   open: boolean;
   onClose: () => void;
@@ -14,18 +13,16 @@ interface TeamLeaderFormProps {
   isLoading?: boolean;
 }
 
-// Formulario modal para crear o editar un team leader
 export default function TeamLeaderForm({ open, onClose, onSubmit, teamLeader, isLoading }: TeamLeaderFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Sincronizar campos al cambiar de team leader o abrir el modal
   useEffect(() => {
     if (teamLeader) {
       setName(teamLeader.name);
       setEmail(teamLeader.email);
-      setPassword(''); // No prellenar password en edición por seguridad
+      setPassword('');
     } else {
       setName('');
       setEmail('');
@@ -36,61 +33,63 @@ export default function TeamLeaderForm({ open, onClose, onSubmit, teamLeader, is
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const data: Record<string, string> = { name, email };
-    if (password) data.password = password; // Solo enviar si se cambió
+    if (password) data.password = password;
     onSubmit(data);
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-card border-border">
+      <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-foreground">{teamLeader ? 'Edit Team Leader' : 'New Team Leader'}</DialogTitle>
+          <DialogTitle className="text-lg font-bold text-foreground">
+            {teamLeader ? 'Editar Team Leader' : 'Nuevo Team Leader'}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-muted-foreground">Name</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className="text-xs font-semibold text-muted-foreground">Nombre Completo</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-input border-border focus:border-neon-green focus:ring-neon-green/20"
+              className="glass-input h-10 rounded-xl text-xs"
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-muted-foreground">Email</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground">Correo Electrónico</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-input border-border focus:border-neon-green focus:ring-neon-green/20"
+              className="glass-input h-10 rounded-xl text-xs"
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-muted-foreground">
-              {teamLeader ? 'New Password (leave blank to keep)' : 'Password'}
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-xs font-semibold text-muted-foreground">
+              {teamLeader ? 'Nueva Contraseña (dejar en blanco para conservar)' : 'Contraseña'}
             </Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-input border-border focus:border-neon-green focus:ring-neon-green/20"
+              className="glass-input h-10 rounded-xl text-xs"
               required={!teamLeader}
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="border-border text-muted-foreground">
-              Cancel
+          <div className="flex justify-end gap-2 pt-3 border-t border-white/5">
+            <Button type="button" variant="outline" onClick={onClose} className="h-9 glass-panel border-white/10 text-xs font-semibold">
+              Cancelar
             </Button>
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-neon-green text-background hover:bg-neon-green/90"
+              className="h-9 bg-gradient-to-r from-neon-green to-emerald-600 hover:from-neon-green/90 text-background font-bold text-xs rounded-xl shadow-lg glow-green"
             >
-              {isLoading ? 'Saving...' : 'Save'}
+              {isLoading ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
         </form>

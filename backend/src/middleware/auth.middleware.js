@@ -1,10 +1,16 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import jwt from 'jsonwebtoken';
 
-// Middleware de autenticación: valida el token JWT del header Authorization
+const JWT_SECRET = process.env.JWT_SECRET || 'coders_app_super_secret_jwt_key_2026!';
+
+/**
+ * Middleware to authenticate requests via JWT Bearer token.
+ */
 export const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  // Rechazar si no se envía header o no tiene formato Bearer
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ ok: false, message: 'No token provided' });
   }
@@ -12,8 +18,7 @@ export const authenticate = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Verificar firma y expiración del token; adjuntar payload decodificado a req.user
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {

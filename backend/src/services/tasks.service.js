@@ -3,10 +3,14 @@ import CoderModel from '../models/Coder.js';
 import TeamLeaderModel from '../models/TeamLeader.js';
 import ClanModel from '../models/Clan.js';
 
-// Campos permitidos para actualizar una tarea (previene inyección de campos extra)
 const ALLOWED_UPDATE = ['title', 'description', 'priority', 'assigneeId', 'clanId'];
 
-// Filtra un objeto dejando solo las claves permitidas
+const PRIORITY_ORDER = {
+  high: 0,
+  medium: 1,
+  low: 2,
+};
+
 function pickAllowed(data, allowed) {
   const result = {};
   for (const key of allowed) {
@@ -15,85 +19,110 @@ function pickAllowed(data, allowed) {
   return result;
 }
 
-// Buscar un usuario (coder o teamLeader) por ID
 function findUser(userId) {
-  let user = CoderModel.getById(userId);
-  if (user) return { id: user.id, name: user.name, email: user.email, role: 'coder' };
+  if (!userId) return null;
+  const coder = CoderModel.getById(userId);
+  if (coder) {
+    return { id: coder.id, name: coder.name, email: coder.email, role: 'coder' };
+  }
 
-  user = TeamLeaderModel.getById(userId);
-  if (user) return { id: user.id, name: user.name, email: user.email, role: user.role };
+  const tl = TeamLeaderModel.getById(userId);
+  if (tl) {
+    return { id: tl.id, name: tl.name, email: tl.email, role: tl.role };
+  }
 
   return null;
 }
 
-// Enriquece una tarea sustituyendo assigneeId y clanId por objetos con datos resumidos
 function enrich(task) {
+  if (!task) return null;
   const result = { ...task };
+
   if (result.assigneeId) {
     const user = findUser(result.assigneeId);
     result.assignee = user ? { id: user.id, name: user.name, email: user.email } : null;
+  } else {
+    result.assignee = null;
   }
+
   if (result.clanId) {
     const clan = ClanModel.getById(result.clanId);
     result.clan = clan ? { id: clan.id, name: clan.name } : null;
+  } else {
+    result.clan = null;
   }
+
   delete result.assigneeId;
   delete result.clanId;
   return result;
 }
 
-// Obtener todas las tareas con datos enriquecidos, ordenadas por prioridad (high > medium > low)
+function sortByPriority(tasks) {
+  return tasks.sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1));
+}
+
 export const getAll = async () => {
-  const priorityOrder = { high: 0, medium: 1, low: 2 };
-  return TaskModel.getAll()
-    .map(enrich)
-    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  const tasks = TaskModel.getAll();
+  const enriched = tasks.map(enrich);
+  return sortByPriority(enriched);
 };
 
-// Obtener tareas filtradas por rol del usuario, ordenadas por prioridad
 export const getByRole = async (userId, role) => {
-  const priorityOrder = { high: 0, medium: 1, low: 2 };
   let tasks;
 
   if (role === 'admin') {
     tasks = TaskModel.getAll();
   } else if (role === 'teamLeader') {
-    // Team leader ve tareas de los clans que lidera
-    const clans = ClanModel.getAll().filter((c) => c.teamLeader === userId);
-    const clanIds = clans.map((c) => c.id);
-    tasks = TaskModel.getAll().filter(
-      (t) => clanIds.includes(t.clanId) || t.assigneeId === userId
+    const allClans = ClanModel.getAll();
+    const ledClans = allClans.filter((c) => c.teamLeader === userId);
+    const ledClanIds = ledClans.map((c) => c.id);
+    const allTasks = TaskModel.getAll();
+    tasks = allTasks.filter(
+      (t) => (t.clanId && ledClanIds.includes(t.clanId)) || t.assigneeId === userId
     );
   } else {
-    // Coder solo ve sus propias tareas
     tasks = TaskModel.getByAssignee(userId);
   }
 
-  return tasks
-    .map(enrich)
-    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  const enriched = tasks.map(enrich);
+  return sortByPriority(enriched);
 };
 
-// Obtener una tarea por ID con datos enriquecidos
 export const getById = async (id) => {
   const task = TaskModel.getById(id);
   return task ? enrich(task) : null;
 };
 
-// Crear una tarea validando que el assignee exista
 export const create = async ({ title, description, priority, assigneeId, clanId }) => {
-  const assignee = findUser(assigneeId);
-  if (!assignee) throw new Error('Assignee not found');
+  if (!title || !title.trim()) throw new Error('Task title is required');
 
+  let validAssigneeId = null;
+  if (assigneeId) {
+    const user = findUser(assigneeId);
+    if (!user) throw new Error('Assignee not found');
+    validAssigneeId = user.id;
+  }
+
+  let validClanId = null;
   if (clanId) {
     const clan = ClanModel.getById(clanId);
     if (!clan) throw new Error('Clan not found');
+    validClanId = clan.id;
   }
 
-  return TaskModel.create({ title, description, priority, assigneeId, clanId });
+  const task = TaskModel.create({
+    title: title.trim(),
+    description: description ? description.trim() : '',
+    priority: ['low', 'medium', 'high'].includes(priority) ? priority : 'medium',
+    assigneeId: validAssigneeId,
+    clanId: validClanId,
+    status: 'pending',
+    deleted: false,
+  });
+
+  return enrich(task);
 };
 
-// Transiciones de estado válidas: pending->review, review->approved/rejected, rejected->pending
 const VALID_TRANSITIONS = {
   pending: ['review'],
   review: ['approved', 'rejected'],
@@ -101,76 +130,90 @@ const VALID_TRANSITIONS = {
   approved: [],
 };
 
-// Actualizar estado de una tarea con validación de permisos y transiciones
 export const updateStatus = async (id, status, userId, role) => {
   const task = TaskModel.getById(id);
-  if (!task) throw new Error('Task not found');
+  if (!task || task.deleted) throw new Error('Task not found');
 
-  // Validar que el estado destino sea válido
-  const allowed = VALID_TRANSITIONS[task.status];
-  if (!allowed || !allowed.includes(status)) {
+  const allowedNext = VALID_TRANSITIONS[task.status];
+  if (!allowedNext || !allowedNext.includes(status)) {
     throw new Error(`Cannot transition from '${task.status}' to '${status}'`);
   }
 
-  // Validar permisos según el estado destino
+  // Permission: pending -> review
   if (status === 'review') {
-    // Solo el assignee puede marcar como "en revisión"
     if (task.assigneeId !== userId && role !== 'admin') {
       throw new Error('Only the assignee can mark a task for review');
     }
   }
 
+  // Permission: review -> approved / rejected
   if (status === 'approved' || status === 'rejected') {
-    // Solo teamLeader o admin pueden aprobar/rechazar
     if (role === 'coder') {
       throw new Error('Only team leaders or admins can approve/reject tasks');
     }
-    // Si es teamLeader, verificar que la tarea pertenezca a su clan
     if (role === 'teamLeader') {
-      const clans = ClanModel.getAll().filter((c) => c.teamLeader === userId);
-      const clanIds = clans.map((c) => c.id);
-      if (!clanIds.includes(task.clanId)) {
+      const allClans = ClanModel.getAll();
+      const ledClans = allClans.filter((c) => c.teamLeader === userId);
+      const ledClanIds = ledClans.map((c) => c.id);
+      if (!task.clanId || !ledClanIds.includes(task.clanId)) {
         throw new Error('Task does not belong to your clan');
       }
     }
   }
 
+  // Permission: rejected -> pending (reopen)
   if (status === 'pending' && task.status === 'rejected') {
-    // Reabrir tarea: solo teamLeader o admin
     if (role === 'coder') {
       throw new Error('Only team leaders or admins can reopen rejected tasks');
     }
   }
 
-  return enrich(TaskModel.update(id, { status }));
+  const updated = TaskModel.update(id, { status });
+  return enrich(updated);
 };
 
-// Actualizar una tarea existente; solo campos seguros (whitelist).
 export const update = async (id, data) => {
+  const current = TaskModel.getById(id);
+  if (!current || current.deleted) throw new Error('Task not found');
+
   const safe = pickAllowed(data, ALLOWED_UPDATE);
-  const task = TaskModel.update(id, safe);
-  if (!task) throw new Error('Task not found');
-  return enrich(task);
+
+  if (safe.assigneeId) {
+    const user = findUser(safe.assigneeId);
+    if (!user) throw new Error('Assignee not found');
+  }
+
+  if (safe.clanId) {
+    const clan = ClanModel.getById(safe.clanId);
+    if (!clan) throw new Error('Clan not found');
+  }
+
+  if (safe.priority && !['low', 'medium', 'high'].includes(safe.priority)) {
+    delete safe.priority;
+  }
+
+  const updated = TaskModel.update(id, safe);
+  return enrich(updated);
 };
 
-// Eliminar una tarea (soft delete: marca como deleted en lugar de borrar)
 export const remove = async (id) => {
-  const task = TaskModel.remove(id);
-  if (!task) throw new Error('Task not found');
-  return task;
+  const task = TaskModel.getById(id);
+  if (!task || task.deleted) throw new Error('Task not found');
+
+  const deleted = TaskModel.remove(id);
+  return deleted;
 };
 
-// Obtener todas las tareas eliminadas (solo admin)
 export const getDeleted = async () => {
-  const priorityOrder = { high: 0, medium: 1, low: 2 };
-  return TaskModel.getDeleted()
-    .map(enrich)
-    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  const deletedTasks = TaskModel.getDeleted();
+  const enriched = deletedTasks.map(enrich);
+  return sortByPriority(enriched);
 };
 
-// Restaurar una tarea eliminada (marca deleted como false)
 export const restore = async (id) => {
-  const task = TaskModel.restore(id);
-  if (!task) throw new Error('Deleted task not found');
-  return enrich(task);
+  const task = TaskModel.getById(id);
+  if (!task || !task.deleted) throw new Error('Deleted task not found');
+
+  const restored = TaskModel.restore(id);
+  return enrich(restored);
 };

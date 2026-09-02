@@ -4,12 +4,8 @@ import { useAuthStore } from '../stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Zap, AlertCircle, WifiOff, Clock, Loader2 } from 'lucide-react';
+import { Zap, AlertCircle, WifiOff, Clock, Loader2, Shield, Layers, ListTodo, Sparkles } from 'lucide-react';
 
-// Tipos de error para mostrar iconos y estilos diferenciados en la UI.
-// Cada tipo tiene un color e icono propio para que el usuario
-// distinga rápidamente qué salió mal.
 type ErrorType = 'credentials' | 'network' | 'timeout' | 'unknown';
 
 interface ErrorInfo {
@@ -19,8 +15,6 @@ interface ErrorInfo {
   colorClass: string;
 }
 
-// Clasifica el error recibido según el código HTTP o el tipo de error de Axios.
-// Devuelve un ErrorInfo con el mensaje, icono y estilo adecuados para cada caso.
 function classifyError(err: unknown): ErrorInfo {
   const axiosErr = err as {
     response?: { status?: number; data?: { message?: string } };
@@ -32,69 +26,53 @@ function classifyError(err: unknown): ErrorInfo {
   const code = axiosErr.code;
   const serverMessage = axiosErr.response?.data?.message;
 
-  // Credenciales incorrectas (401 o 403)
   if (status === 401 || status === 403) {
     return {
-      message: 'Email or password is incorrect',
+      message: 'Correo electrónico o contraseña incorrectos',
       type: 'credentials',
       icon: <AlertCircle className="w-4 h-4" />,
       colorClass: 'text-destructive bg-destructive/10 border-destructive/20',
     };
   }
 
-  // Sin conexión a internet o servidor caído
   if (code === 'ERR_NETWORK' || code === 'ECONNREFUSED' || !axiosErr.response) {
     return {
-      message: 'Unable to connect. Check your internet connection',
+      message: 'No se pudo conectar con el servidor',
       type: 'network',
       icon: <WifiOff className="w-4 h-4" />,
       colorClass: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
     };
   }
 
-  // El servidor tardó demasiado en responder
   if (code === 'ECONNABORTED' || axiosErr.message?.includes('timeout')) {
     return {
-      message: 'Server took too long to respond. Try again',
+      message: 'El servidor tardó demasiado en responder',
       type: 'timeout',
       icon: <Clock className="w-4 h-4" />,
       colorClass: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
     };
   }
 
-  // Cualquier otro error: usa el mensaje del servidor si existe
   return {
-    message: serverMessage || 'An unexpected error occurred',
+    message: serverMessage || 'Ocurrió un error inesperado',
     type: 'unknown',
     icon: <AlertCircle className="w-4 h-4" />,
     colorClass: 'text-destructive bg-destructive/10 border-destructive/20',
   };
 }
 
-// Página de login/registro dual.
-// Por defecto muestra el formulario de Sign In (cuenta existente).
-// El usuario puede cambiar a modo registro (Create Account) que
-// solo crea cuentas con rol 'coder'.
 export default function LoginPage() {
-  // Modo del formulario: 'login' o 'register' (login por defecto)
   const [mode, setMode] = useState<'register' | 'login'>('login');
-  // Campos del formulario
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // Estado del banner de error (null = sin error)
   const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
-  // Estado de loading mientras se procesa la petición
   const [loading, setLoading] = useState(false);
-  // Activa la animación shake cuando hay un error
   const [shake, setShake] = useState(false);
-  // Acciones del store de autenticación
   const login = useAuthStore((s) => s.login);
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
 
-  // Auto-dismiss del error después de 5 segundos.
-  // Si el errorInfo cambia, se reinicia el timer.
   useEffect(() => {
     if (errorInfo) {
       const timer = setTimeout(() => setErrorInfo(null), 5000);
@@ -102,8 +80,6 @@ export default function LoginPage() {
     }
   }, [errorInfo]);
 
-  // Alterna entre modo login y registro.
-  // Limpia todos los campos y errores al cambiar.
   const toggleMode = () => {
     setMode((prev) => (prev === 'register' ? 'login' : 'register'));
     setErrorInfo(null);
@@ -112,21 +88,15 @@ export default function LoginPage() {
     setPassword('');
   };
 
-  // Valida que el email tenga un formato válido (nombre@dominio.ext).
-  // Se usa una expresión regular simple pero efectiva.
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-  // Maneja el envío del formulario.
-  // Primero valida el email en el cliente, luego llama a login o register
-  // según el modo activo. Si todo sale bien, redirige al dashboard.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorInfo(null);
 
-    // Validación de formato de email antes de enviar al servidor
     if (!isValidEmail(email)) {
       setErrorInfo({
-        message: 'Please enter a valid email address',
+        message: 'Por favor ingresa un correo electrónico válido',
         type: 'credentials',
         icon: <AlertCircle className="w-4 h-4" />,
         colorClass: 'text-destructive bg-destructive/10 border-destructive/20',
@@ -136,7 +106,6 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      // Ejecutar login o registro según el modo seleccionado
       if (mode === 'register') {
         await register(name, email, password);
       } else {
@@ -144,10 +113,8 @@ export default function LoginPage() {
       }
       navigate('/dashboard');
     } catch (err: unknown) {
-      // Clasificar el error y mostrarlo en el banner
       const info = classifyError(err);
       setErrorInfo(info);
-      // Activar animación shake para feedback visual
       setShake(true);
       setTimeout(() => setShake(false), 500);
     } finally {
@@ -155,123 +122,166 @@ export default function LoginPage() {
     }
   };
 
-  // Variable de conveniencia para simplificar las condicionales del JSX
   const isRegister = mode === 'register';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      {/* Efectos de fondo decorativos: dos círculos difusos con color neon sutil */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-cyan/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-neon-magenta/5 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
+      {/* Background Glow Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-neon-cyan/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-neon-magenta/10 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Tarjeta principal del formulario con animación shake al haber error */}
-      <Card className={`w-full max-w-md relative border-border bg-card/80 backdrop-blur-sm ${shake ? 'animate-shake' : ''}`}>
-        {/* Brillo neon sutil en el borde de la tarjeta */}
-        <div className="absolute inset-0 rounded-xl glow-cyan opacity-20 pointer-events-none" />
-
-        <CardHeader className="text-center space-y-2">
-          {/* Icono de la app */}
-          <div className="mx-auto w-12 h-12 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 flex items-center justify-center glow-cyan">
-            <Zap className="w-6 h-6 text-neon-cyan" />
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative z-10">
+        
+        {/* Left Side: Brand Promo / Platform Capabilities */}
+        <div className="md:col-span-5 space-y-6 hidden md:block">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel border border-neon-cyan/30 text-neon-cyan text-xs font-semibold tracking-wide">
+            <Sparkles className="w-3.5 h-3.5" />
+            PLATAFORMA FULLSTACK
           </div>
-          <CardTitle className="text-2xl font-bold text-foreground">Coders App</CardTitle>
-          {/* Subtítulo dinámico según el modo */}
-          <p className="text-sm text-muted-foreground">
-            {isRegister ? 'Create your coder account' : 'Sign in to your account'}
-          </p>
-        </CardHeader>
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground leading-tight">
+              Organiza tu fuerza técnica con <span className="text-gradient-cyan">Precisión</span> & <span className="text-gradient-magenta">Velocidad</span>.
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+              Task Board en tiempo real, gestión de Clans y autenticación RBAC jerárquica.
+            </p>
+          </div>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Banner de error: se muestra cuando hay un error con icono y colores diferenciados */}
-            {errorInfo && (
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm animate-in fade-in slide-in-from-top-2 ${errorInfo.colorClass}`}>
-                {errorInfo.icon}
-                <span>{errorInfo.message}</span>
+          {/* Platform Feature Cards */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center gap-3 p-3 rounded-xl glass-panel border-white/5">
+              <div className="w-8 h-8 rounded-lg bg-neon-cyan/15 border border-neon-cyan/30 flex items-center justify-center text-neon-cyan shrink-0">
+                <Layers className="w-4 h-4" />
               </div>
-            )}
+              <div>
+                <p className="text-xs font-bold text-foreground">Workspaces de Clans</p>
+                <p className="text-[11px] text-muted-foreground">Organiza Coders en unidades técnicas de trabajo</p>
+              </div>
+            </div>
 
-            {/* Campo nombre: solo visible en modo registro */}
-            {isRegister && (
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-muted-foreground">Name</Label>
+            <div className="flex items-center gap-3 p-3 rounded-xl glass-panel border-white/5">
+              <div className="w-8 h-8 rounded-lg bg-neon-magenta/15 border border-neon-magenta/30 flex items-center justify-center text-neon-magenta shrink-0">
+                <ListTodo className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-foreground">Kanban Pipelines</p>
+                <p className="text-[11px] text-muted-foreground">Flujo estricto: Pending, Review, Approved y Rejected</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl glass-panel border-white/5">
+              <div className="w-8 h-8 rounded-lg bg-neon-green/15 border border-neon-green/30 flex items-center justify-center text-neon-green shrink-0">
+                <Shield className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-foreground">RBAC Jerárquico</p>
+                <p className="text-[11px] text-muted-foreground">Permisos específicos para Coders, Team Leaders y Admins</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Auth Glass Card */}
+        <div className="md:col-span-7">
+          <div className={`glass-card p-8 rounded-2xl relative ${shake ? 'animate-shake' : 'animate-fade-in-scale'}`}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-11 h-11 rounded-xl bg-neon-cyan/15 border border-neon-cyan/40 flex items-center justify-center glow-cyan">
+                <Zap className="w-6 h-6 text-neon-cyan animate-pulse-soft" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-foreground tracking-tight">Coders App</h2>
+                <p className="text-xs text-muted-foreground">
+                  {isRegister ? 'Registra tu perfil de Coder' : 'Inicia sesión para acceder a tu Dashboard'}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {errorInfo && (
+                <div className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-xs animate-in fade-in slide-in-from-top-2 ${errorInfo.colorClass}`}>
+                  {errorInfo.icon}
+                  <span>{errorInfo.message}</span>
+                </div>
+              )}
+
+              {isRegister && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="name" className="text-xs font-semibold text-muted-foreground">Nombre Completo</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Jane Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="glass-input h-11 rounded-xl text-sm"
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground">Correo Electrónico</Label>
                 <Input
-                  id="name"
+                  id="email"
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="bg-input border-border focus:border-neon-cyan focus:ring-neon-cyan/20"
+                  placeholder="user@coders.app"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="glass-input h-11 rounded-xl text-sm"
                   required
                 />
               </div>
-            )}
 
-            {/* Campo email: visible en ambos modos. Type "text" en lugar de "email"
-                para que la validación custom muestre nuestro mensaje de error */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-muted-foreground">Email</Label>
-              <Input
-                id="email"
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-input border-border focus:border-neon-cyan focus:ring-neon-cyan/20"
-                required
-              />
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-xs font-semibold text-muted-foreground">Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="glass-input h-11 rounded-xl text-sm"
+                  required
+                />
+              </div>
 
-            {/* Campo contraseña: visible en ambos modos */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-muted-foreground">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-input border-border focus:border-neon-cyan focus:ring-neon-cyan/20"
-                required
-              />
-            </div>
+              <Button
+                type="submit"
+                className="w-full h-11 mt-2 bg-gradient-to-r from-neon-cyan to-blue-600 hover:from-neon-cyan/90 hover:to-blue-600/90 text-background font-bold text-sm rounded-xl shadow-lg glow-cyan transition-all"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {isRegister ? 'Creando cuenta...' : 'Autenticando...'}
+                  </span>
+                ) : (
+                  isRegister ? 'Crear Cuenta Coder' : 'Iniciar Sesión'
+                )}
+              </Button>
+            </form>
 
-            {/* Botón principal: texto y loading state cambian según el modo */}
-            <Button
-              type="submit"
-              className="w-full bg-neon-cyan text-background hover:bg-neon-cyan/90 font-semibold"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {isRegister ? 'Creating account...' : 'Signing in...'}
-                </span>
+            <div className="mt-6 text-center text-xs text-muted-foreground border-t border-white/5 pt-4">
+              {isRegister ? (
+                <>
+                  ¿Ya tienes cuenta?{' '}
+                  <button type="button" onClick={toggleMode} className="text-neon-cyan hover:underline font-semibold ml-1">
+                    Iniciar Sesión
+                  </button>
+                </>
               ) : (
-                isRegister ? 'Create Account' : 'Sign In'
+                <>
+                  ¿Necesitas una cuenta?{' '}
+                  <button type="button" onClick={toggleMode} className="text-neon-cyan hover:underline font-semibold ml-1">
+                    Crear Perfil Coder
+                  </button>
+                </>
               )}
-            </Button>
-          </form>
-
-          {/* Enlace para alternar entre login y registro */}
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            {isRegister ? (
-              <>
-                Already have an account?{' '}
-                <button type="button" onClick={toggleMode} className="text-neon-cyan hover:underline font-medium">
-                  Sign In
-                </button>
-              </>
-            ) : (
-              <>
-                Don't have an account?{' '}
-                <button type="button" onClick={toggleMode} className="text-neon-cyan hover:underline font-medium">
-                  Create one
-                </button>
-              </>
-            )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+      </div>
     </div>
   );
 }

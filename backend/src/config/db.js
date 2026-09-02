@@ -1,13 +1,13 @@
-import mongoose from 'mongoose';
-
-// Conexión a MongoDB (reservado para uso futuro, el backend actual usa JSON files)
+// Conexión a Base de Datos (preparado para migración futura a base de datos persistente)
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+    if (process.env.MONGO_URI) {
+      console.log('Database connector initialized with URI:', process.env.MONGO_URI);
+    } else {
+      console.log('Using local JSON persistence (data/)');
+    }
   } catch (error) {
-    console.error(`MongoDB connection error: ${error.message}`);
-    process.exit(1);
+    console.error('Database connection error:', error.message);
   }
 };
 

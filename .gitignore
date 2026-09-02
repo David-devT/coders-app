@@ -34,3 +34,9 @@ frontend/.env
 
 # Data files
 backend/src/data/
+
+# Credentials & local secrets
+credentials.txt
+*.credentials.txt
+cuentas.txt
+

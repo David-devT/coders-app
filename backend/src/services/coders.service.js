@@ -1,12 +1,11 @@
 import bcrypt from 'bcryptjs';
 import CoderModel from '../models/Coder.js';
+import TeamLeaderModel from '../models/TeamLeader.js';
 import ClanModel from '../models/Clan.js';
+import TaskModel from '../models/Task.js';
 
-// Campos permitidos para crear/actualizar un coder (previene inyección de campos extra)
-const ALLOWED_CREATE = ['name', 'email', 'password', 'clan'];
 const ALLOWED_UPDATE = ['name', 'email', 'password', 'clan'];
 
-// Filtra un objeto dejando solo las claves permitidas
 function pickAllowed(data, allowed) {
   const result = {};
   for (const key of allowed) {
@@ -15,73 +14,146 @@ function pickAllowed(data, allowed) {
   return result;
 }
 
-// Elimina password del objeto antes de enviar al cliente
 function sanitize(user) {
+  if (!user) return null;
   const { password, ...rest } = user;
   return rest;
 }
 
-// Sustituye el ID del clan por un objeto con id y name
 function enrich(coder) {
+  if (!coder) return null;
   const s = sanitize(coder);
   if (s.clan) {
     const clan = ClanModel.getById(s.clan);
     s.clan = clan ? { id: clan.id, name: clan.name } : null;
   }
-  return s;
+  return { ...s, role: 'coder' };
 }
 
-// Obtener todos los coders con datos enriquecidos
 export const getAll = async () => {
-  return CoderModel.getAll().map(enrich);
+  const coders = CoderModel.getAll();
+  return coders.map(enrich);
 };
 
-// Obtener un coder por ID con datos enriquecidos
 export const getById = async (id) => {
   const coder = CoderModel.getById(id);
   return coder ? enrich(coder) : null;
 };
 
-// Crear coder: valida email duplicado, hashea contraseña y persiste
 export const create = async ({ name, email, password, clan }) => {
-  const existing = CoderModel.getByEmail(email);
-  if (existing) throw new Error('Email already registered');
+  if (!name || !name.trim()) throw new Error('Name is required');
+  if (!email || !email.trim()) throw new Error('Email is required');
+  if (!password || password.length < 6) throw new Error('Password must be at least 6 characters');
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const existingCoder = CoderModel.getByEmail(normalizedEmail);
+  const existingTL = TeamLeaderModel.getByEmail(normalizedEmail);
+  if (existingCoder || existingTL) {
+    throw new Error('Email already registered');
+  }
+
+  let clanId = null;
+  if (clan) {
+    const targetClan = ClanModel.getById(clan);
+    if (!targetClan) throw new Error('Target clan does not exist');
+    clanId = targetClan.id;
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const coder = CoderModel.create({ name, email, password: hashedPassword, clan });
+  const coder = CoderModel.create({
+    name: name.trim(),
+    email: normalizedEmail,
+    password: hashedPassword,
+    clan: clanId,
+  });
+
+  // Bidirectional sync: add coder to clan
+  if (clanId) {
+    const targetClan = ClanModel.getById(clanId);
+    if (targetClan && !targetClan.coders?.includes(coder.id)) {
+      const updatedCoders = [...(targetClan.coders || []), coder.id];
+      ClanModel.update(clanId, { coders: updatedCoders });
+    }
+  }
+
   return enrich(coder);
 };
 
-// Actualizar coder: hashea nueva contraseña si se proporciona, o la omite.
-// Solo se permiten campos seguros (whitelist).
 export const update = async (id, data) => {
+  const current = CoderModel.getById(id);
+  if (!current) throw new Error('Coder not found');
+
   const safe = pickAllowed(data, ALLOWED_UPDATE);
 
+  if (safe.email) {
+    const normalizedEmail = safe.email.trim().toLowerCase();
+    if (normalizedEmail !== current.email.toLowerCase()) {
+      const existingCoder = CoderModel.getByEmail(normalizedEmail);
+      const existingTL = TeamLeaderModel.getByEmail(normalizedEmail);
+      if (existingCoder || existingTL) {
+        throw new Error('Email already registered');
+      }
+      safe.email = normalizedEmail;
+    }
+  }
+
   if (safe.password) {
+    if (safe.password.trim().length < 6) {
+      throw new Error('Password must be at least 6 characters');
+    }
     safe.password = await bcrypt.hash(safe.password, 10);
   } else {
     delete safe.password;
   }
 
-  const coder = CoderModel.update(id, safe);
-  if (!coder) throw new Error('Coder not found');
-  return enrich(coder);
+  // Handle Clan change sync
+  if (safe.clan !== undefined && safe.clan !== current.clan) {
+    // Remove from previous clan
+    if (current.clan) {
+      const oldClan = ClanModel.getById(current.clan);
+      if (oldClan) {
+        ClanModel.update(oldClan.id, {
+          coders: (oldClan.coders || []).filter((cId) => cId !== id),
+        });
+      }
+    }
+    // Add to new clan
+    if (safe.clan) {
+      const newClan = ClanModel.getById(safe.clan);
+      if (!newClan) throw new Error('Target clan does not exist');
+      if (!newClan.coders?.includes(id)) {
+        ClanModel.update(newClan.id, {
+          coders: [...(newClan.coders || []), id],
+        });
+      }
+    }
+  }
+
+  const updatedCoder = CoderModel.update(id, safe);
+  return enrich(updatedCoder);
 };
 
-// Eliminar coder y limpiar referencias en todos los clans que lo contienen
 export const remove = async (id) => {
   const coder = CoderModel.remove(id);
   if (!coder) throw new Error('Coder not found');
 
-  // Desasociar el coder eliminado de todos los clans
+  // Cascade 1: Remove coder from all clans
   const clans = ClanModel.getAll();
   for (const clan of clans) {
-    if (clan.coders.includes(id)) {
+    if (clan.coders?.includes(id)) {
       ClanModel.update(clan.id, {
         coders: clan.coders.filter((cId) => cId !== id),
       });
     }
   }
 
-  return coder;
+  // Cascade 2: Unassign tasks
+  const tasks = TaskModel.getAll();
+  for (const task of tasks) {
+    if (task.assigneeId === id) {
+      TaskModel.update(task.id, { assigneeId: null });
+    }
+  }
+
+  return sanitize(coder);
 };

@@ -2,20 +2,54 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.resolve(__dirname, '..', 'data');
 
-// Lee un archivo JSON del directorio data/ y retorna su contenido como array
-function readJSON(filename) {
-  const filePath = path.join(DATA_DIR, filename);
-  if (!fs.existsSync(filePath)) return [];
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+/**
+ * Ensures the data directory exists
+ */
+function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
 }
 
-// Escribe datos serializados en JSON al archivo correspondiente (persistencia en disco)
-function writeJSON(filename, data) {
+/**
+ * Reads a JSON file from the data directory.
+ * Returns an array of items or an empty array if file does not exist or fails to parse.
+ * @param {string} filename 
+ * @returns {Array<any>}
+ */
+export function readJSON(filename) {
+  ensureDataDir();
   const filePath = path.join(DATA_DIR, filename);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  if (!fs.existsSync(filePath)) {
+    return [];
+  }
+
+  try {
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    if (!raw.trim()) return [];
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error(`Error reading ${filename}:`, error.message);
+    return [];
+  }
 }
 
-export { readJSON, writeJSON };
+/**
+ * Writes an array of items to a JSON file in the data directory.
+ * @param {string} filename 
+ * @param {Array<any>} data 
+ */
+export function writeJSON(filename, data) {
+  ensureDataDir();
+  const filePath = path.join(DATA_DIR, filename);
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    console.error(`Error writing ${filename}:`, error.message);
+    throw error;
+  }
+}

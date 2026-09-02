@@ -5,14 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Plus, Search, ArrowUp, ArrowDown } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, ArrowUp, ArrowDown, Users, ShieldCheck, Shield } from 'lucide-react';
 import TeamLeaderForm from './TeamLeaderForm';
 import DeleteTeamLeaderDialog from './DeleteTeamLeaderDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import type { TeamLeader } from '../../types';
 
-// Tabla de gestión de Team Leaders (solo visible para admins)
-// Permite crear, editar, eliminar, promover coders y degradar team leaders.
 export default function TeamLeadersTable() {
   const { teamLeaders, createTeamLeader, updateTeamLeader, deleteTeamLeader, promoteCoder, demoteTL } = useTeamLeaders();
   const { coders } = useCoders();
@@ -24,7 +22,6 @@ export default function TeamLeadersTable() {
   const [selectedCoderId, setSelectedCoderId] = useState('');
   const [search, setSearch] = useState('');
 
-  // Filtrado client-side por nombre, email o rol
   const filtered = teamLeaders.data?.filter(
     (t) =>
       t.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -53,7 +50,6 @@ export default function TeamLeadersTable() {
     }
   };
 
-  // Promover un coder seleccionado a team leader
   const handlePromote = async () => {
     if (!selectedCoderId) return;
     await promoteCoder.mutateAsync(selectedCoderId);
@@ -61,7 +57,6 @@ export default function TeamLeadersTable() {
     setSelectedCoderId('');
   };
 
-  // Degradar un team leader a coder
   const handleDemote = async () => {
     if (!selectedTL) return;
     await demoteTL.mutateAsync(selectedTL.id);
@@ -70,113 +65,141 @@ export default function TeamLeadersTable() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Cabecera con botones de crear y promover coder */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Team Leaders</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setPromoteOpen(true)} className="bg-neon-cyan text-background hover:bg-neon-cyan/90">
-            <ArrowUp className="w-4 h-4 mr-2" /> Promote Coder
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-neon-green/15 border border-neon-green/30 flex items-center justify-center glow-green">
+            <Users className="w-6 h-6 text-neon-green" />
+          </div>
+          <div>
+            <h1 className="text-xl font-extrabold text-foreground tracking-tight">Directorio de Team Leaders</h1>
+            <p className="text-xs text-muted-foreground">Gestiona líderes, promueve Coders y supervisa la asignación de Clans</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setPromoteOpen(true)}
+            className="h-10 glass-panel border border-neon-cyan/40 text-neon-cyan hover:bg-neon-cyan/15 font-bold text-xs rounded-xl"
+          >
+            <ArrowUp className="w-4 h-4 mr-2" /> Promover Coder
           </Button>
-          <Button onClick={() => setFormOpen(true)} className="bg-neon-green text-background hover:bg-neon-green/90">
-            <Plus className="w-4 h-4 mr-2" /> Add Team Leader
+          <Button
+            onClick={() => setFormOpen(true)}
+            className="h-10 bg-gradient-to-r from-neon-green to-emerald-600 hover:from-neon-green/90 text-background font-bold text-xs rounded-xl shadow-lg glow-green"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Agregar Team Leader
           </Button>
         </div>
       </div>
 
-      {/* Barra de búsqueda con acento verde */}
+      {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search by name, email or role..."
+          placeholder="Buscar por nombre, correo o rol..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-input border-border focus:border-neon-green focus:ring-neon-green/20"
+          className="glass-input h-11 pl-10 rounded-xl text-xs"
         />
       </div>
 
+      {/* Table Container */}
       {teamLeaders.isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-neon-green/30 border-t-neon-green rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-16">
+          <div className="w-8 h-8 border-2 border-neon-green/30 border-t-neon-green rounded-full animate-spin glow-green" />
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
           <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-border">
-                <TableHead className="text-muted-foreground">#</TableHead>
-                <TableHead className="text-muted-foreground">Name</TableHead>
-                <TableHead className="text-muted-foreground">Email</TableHead>
-                <TableHead className="text-muted-foreground">Role</TableHead>
-                <TableHead className="text-muted-foreground">Clans</TableHead>
-                <TableHead className="text-muted-foreground text-right">Actions</TableHead>
+            <TableHeader className="bg-white/5">
+              <TableRow className="hover:bg-transparent border-white/5">
+                <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Perfil del Leader</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Correo</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Rol de Acceso</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Clans Liderados</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    No team leaders found
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-12 text-xs">
+                    No se encontraron Team Leaders que coincidan con la búsqueda
                   </TableCell>
                 </TableRow>
               ) : (
                 filtered?.map((tl, i) => (
-                  <TableRow key={tl.id} className="border-border hover:bg-muted/50">
-                    <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                    <TableCell className="font-medium text-foreground">{tl.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{tl.email}</TableCell>
+                  <TableRow key={tl.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                    <TableCell className="text-xs font-medium text-muted-foreground">{i + 1}</TableCell>
                     <TableCell>
-                      {/* Badge de rol: admin=verde, teamLeader=default */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-neon-green/15 border border-neon-green/30 flex items-center justify-center font-bold text-xs text-neon-green">
+                          {tl.name.charAt(0)}
+                        </div>
+                        <span className="font-bold text-xs text-foreground">{tl.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{tl.email}</TableCell>
+                    <TableCell>
                       <Badge
                         variant={tl.role === 'admin' ? 'default' : 'secondary'}
-                        className={tl.role === 'admin' ? 'bg-neon-green/10 text-neon-green border border-neon-green/20' : ''}
+                        className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
+                          tl.role === 'admin'
+                            ? 'bg-neon-green/15 text-neon-green border border-neon-green/30'
+                            : 'bg-white/10 text-foreground border border-white/10'
+                        }`}
                       >
+                        {tl.role === 'admin' && <ShieldCheck className="w-3 h-3 mr-1 inline" />}
                         {tl.role}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {/* Lista de clans liderados con badges magenta */}
                       {tl.clans && tl.clans.length > 0 ? (
-                        <div className="flex gap-1 flex-wrap">
+                        <div className="flex gap-1.5 flex-wrap">
                           {tl.clans.map((c) => (
-                            <span key={c.id} className="px-2 py-0.5 rounded-full text-xs bg-neon-magenta/10 text-neon-magenta border border-neon-magenta/20">
+                            <span key={c.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-neon-magenta/15 text-neon-magenta border border-neon-magenta/30">
+                              <Shield className="w-2.5 h-2.5" />
                               {c.name}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">-</span>
+                        <span className="text-xs text-muted-foreground/60 italic">Sin Clans asignados</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-1 justify-end">
-                        {/* Botón degradar: solo para team leaders (no admins) */}
                         {tl.role !== 'admin' && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="hover:text-yellow-400 hover:bg-yellow-500/10"
-                            title="Demote to Coder"
+                            className="w-8 h-8 text-muted-foreground hover:text-amber-400 hover:bg-amber-500/15 rounded-xl"
+                            title="Degradar a Coder"
                             onClick={() => { setSelectedTL(tl); setDemoteOpen(true); }}
                           >
-                            <ArrowDown className="w-4 h-4" />
+                            <ArrowDown className="w-3.5 h-3.5" />
                           </Button>
                         )}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="hover:text-neon-green hover:bg-neon-green/10"
+                          className="w-8 h-8 text-muted-foreground hover:text-neon-green hover:bg-neon-green/15 rounded-xl"
+                          title="Editar Team Leader"
                           onClick={() => { setSelectedTL(tl); setFormOpen(true); }}
                         >
-                          <Pencil className="w-4 h-4" />
+                          <Pencil className="w-3.5 h-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="hover:text-destructive hover:bg-destructive/10"
+                          className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl"
+                          title="Eliminar Team Leader"
                           onClick={() => { setSelectedTL(tl); setDeleteOpen(true); }}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </TableCell>
@@ -188,6 +211,7 @@ export default function TeamLeadersTable() {
         </div>
       )}
 
+      {/* Form Modal */}
       <TeamLeaderForm
         open={formOpen}
         onClose={() => { setFormOpen(false); setSelectedTL(null); }}
@@ -196,6 +220,7 @@ export default function TeamLeadersTable() {
         isLoading={createTeamLeader.isPending || updateTeamLeader.isPending}
       />
 
+      {/* Delete Dialog */}
       <DeleteTeamLeaderDialog
         open={deleteOpen}
         onClose={() => { setDeleteOpen(false); setSelectedTL(null); }}
@@ -204,63 +229,62 @@ export default function TeamLeadersTable() {
         isLoading={deleteTeamLeader.isPending}
       />
 
-      {/* Diálogo para promover un coder a team leader */}
+      {/* Promote Coder Modal */}
       <Dialog open={promoteOpen} onOpenChange={setPromoteOpen}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Promote Coder to Team Leader</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Select a coder to promote. They will become a Team Leader and lose their coder status.
+            <DialogTitle className="text-lg font-bold text-foreground">Promover Coder a Team Leader</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              El Coder seleccionado obtendrá privilegios de Team Leader y saldrá de la lista de Coders.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Select Coder</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">Seleccionar Coder</label>
               <select
                 value={selectedCoderId}
                 onChange={(e) => setSelectedCoderId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-input border border-border text-foreground focus:border-neon-green focus:ring-1 focus:ring-neon-green/20"
+                className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-neon-green focus:ring-1 focus:ring-neon-green/20"
               >
-                <option value="">Choose a coder...</option>
+                <option value="" className="bg-card">Selecciona un Coder para promover...</option>
                 {coders.data?.map((coder) => (
-                  <option key={coder.id} value={coder.id}>
+                  <option key={coder.id} value={coder.id} className="bg-card text-foreground">
                     {coder.name} ({coder.email})
                   </option>
                 ))}
               </select>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => { setPromoteOpen(false); setSelectedCoderId(''); }} className="border-border text-muted-foreground">
-                Cancel
+            <div className="flex justify-end gap-2 pt-3 border-t border-white/5">
+              <Button variant="outline" onClick={() => { setPromoteOpen(false); setSelectedCoderId(''); }} className="h-9 glass-panel border-white/10 text-xs font-semibold">
+                Cancelar
               </Button>
               <Button
                 onClick={handlePromote}
                 disabled={!selectedCoderId || promoteCoder.isPending}
-                className="bg-neon-green text-background hover:bg-neon-green/90"
+                className="h-9 bg-gradient-to-r from-neon-green to-emerald-600 hover:from-neon-green/90 text-background font-bold text-xs rounded-xl shadow-lg glow-green"
               >
-                {promoteCoder.isPending ? 'Promoting...' : 'Promote'}
+                {promoteCoder.isPending ? 'Promoviendo...' : 'Promover Coder'}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo para confirmar degradación de team leader a coder */}
+      {/* Demote Modal */}
       <Dialog open={demoteOpen} onOpenChange={setDemoteOpen}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Demote Team Leader</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Are you sure you want to demote <strong className="text-foreground">{selectedTL?.name}</strong> to Coder?
-              They will lose their team leader privileges and any clans they led will be unassigned.
+            <DialogTitle className="text-lg font-bold text-foreground">Degradar Team Leader</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              ¿Estás seguro de que deseas degradar a <strong className="text-foreground">{selectedTL?.name}</strong> al rol de Coder?
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => { setDemoteOpen(false); setSelectedTL(null); }} className="border-border text-muted-foreground">
-              Cancel
+          <div className="flex justify-end gap-2 pt-3 border-t border-white/5">
+            <Button variant="outline" onClick={() => { setDemoteOpen(false); setSelectedTL(null); }} className="h-9 glass-panel border-white/10 text-xs font-semibold">
+              Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleDemote} disabled={demoteTL.isPending}>
-              {demoteTL.isPending ? 'Demoting...' : 'Demote'}
+            <Button variant="destructive" onClick={handleDemote} disabled={demoteTL.isPending} className="h-9 font-bold text-xs rounded-xl">
+              {demoteTL.isPending ? 'Degradando...' : 'Confirmar Degradación'}
             </Button>
           </div>
         </DialogContent>

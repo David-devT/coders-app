@@ -1,12 +1,10 @@
 import ClanModel from '../models/Clan.js';
 import TeamLeaderModel from '../models/TeamLeader.js';
 import CoderModel from '../models/Coder.js';
+import TaskModel from '../models/Task.js';
 
-// Campos permitidos para crear/actualizar un clan (previene inyección de campos extra)
-const ALLOWED_CREATE = ['name', 'description', 'teamLeader', 'coders'];
 const ALLOWED_UPDATE = ['name', 'description', 'teamLeader', 'coders'];
 
-// Filtra un objeto dejando solo las claves permitidas
 function pickAllowed(data, allowed) {
   const result = {};
   for (const key of allowed) {
@@ -15,80 +13,150 @@ function pickAllowed(data, allowed) {
   return result;
 }
 
-// Enriquece un clan sustituyendo IDs de teamLeader y coders por objetos con datos resumidos
 function enrich(clan) {
+  if (!clan) return null;
   const result = { ...clan };
+
   if (result.teamLeader) {
     const tl = TeamLeaderModel.getById(result.teamLeader);
     result.teamLeader = tl ? { id: tl.id, name: tl.name, email: tl.email } : null;
+  } else {
+    result.teamLeader = null;
   }
-  if (result.coders?.length) {
-    result.coders = result.coders
+
+  if (Array.isArray(result.coders) && result.coders.length > 0) {
+    const codersList = result.coders
       .map((cId) => {
         const c = CoderModel.getById(cId);
         return c ? { id: c.id, name: c.name, email: c.email } : null;
       })
       .filter(Boolean);
+    result.coders = codersList;
+  } else {
+    result.coders = [];
   }
+
   return result;
 }
 
-// Obtener todos los clans con datos enriquecidos
 export const getAll = async () => {
-  return ClanModel.getAll().map(enrich);
+  const clans = ClanModel.getAll();
+  return clans.map(enrich);
 };
 
-// Obtener un clan por ID con datos enriquecidos
 export const getById = async (id) => {
   const clan = ClanModel.getById(id);
   return clan ? enrich(clan) : null;
 };
 
-// Crear un clan validando unicidad de nombre y límite de 2 clans por team leader
-export const create = async ({ name, description, teamLeader }) => {
-  const existing = ClanModel.getByName(name);
+export const create = async ({ name, description, teamLeader, coders }) => {
+  if (!name || !name.trim()) throw new Error('Clan name is required');
+
+  const existing = ClanModel.getByName(name.trim());
   if (existing) throw new Error('Clan name already exists');
 
-  // Validar que el team leader no tenga ya 2 o más clans
+  let assignedTL = null;
   if (teamLeader) {
+    const tl = TeamLeaderModel.getById(teamLeader);
+    if (!tl) throw new Error('Assigned Team Leader not found');
+
     const allClans = ClanModel.getAll();
     const tlClans = allClans.filter((c) => c.teamLeader === teamLeader);
     if (tlClans.length >= 2) {
       throw new Error('Team Leader can only lead a maximum of 2 clans');
     }
+    assignedTL = tl.id;
   }
 
-  return ClanModel.create({ name, description, teamLeader });
-};
+  const coderIds = Array.isArray(coders) ? coders : [];
+  const created = ClanModel.create({
+    name: name.trim(),
+    description: description ? description.trim() : '',
+    teamLeader: assignedTL,
+    coders: coderIds,
+  });
 
-// Actualizar un clan existente; valida límite de 2 clans si se cambia el team leader.
-// Solo se permiten campos seguros (whitelist).
-export const update = async (id, data) => {
-  const safe = pickAllowed(data, ALLOWED_UPDATE);
-
-  if (safe.teamLeader) {
-    const allClans = ClanModel.getAll();
-    const tlClans = allClans.filter((c) => c.teamLeader === safe.teamLeader && c.id !== id);
-    if (tlClans.length >= 2) {
-      throw new Error('Team Leader can only lead a maximum of 2 clans');
+  // Sync coders clan field
+  for (const cId of coderIds) {
+    const coder = CoderModel.getById(cId);
+    if (coder) {
+      CoderModel.update(cId, { clan: created.id });
     }
   }
 
-  const clan = ClanModel.update(id, safe);
-  if (!clan) throw new Error('Clan not found');
-  return enrich(clan);
+  return enrich(created);
 };
 
-// Eliminar un clan y desasociar todos los coders que pertenecían a él
+export const update = async (id, data) => {
+  const current = ClanModel.getById(id);
+  if (!current) throw new Error('Clan not found');
+
+  const safe = pickAllowed(data, ALLOWED_UPDATE);
+
+  if (safe.name) {
+    const normalizedName = safe.name.trim();
+    if (normalizedName.toLowerCase() !== current.name.toLowerCase()) {
+      const existing = ClanModel.getByName(normalizedName);
+      if (existing) throw new Error('Clan name already exists');
+      safe.name = normalizedName;
+    }
+  }
+
+  if (safe.teamLeader !== undefined) {
+    if (safe.teamLeader) {
+      const tl = TeamLeaderModel.getById(safe.teamLeader);
+      if (!tl) throw new Error('Assigned Team Leader not found');
+
+      const allClans = ClanModel.getAll();
+      const tlClans = allClans.filter((c) => c.teamLeader === safe.teamLeader && c.id !== id);
+      if (tlClans.length >= 2) {
+        throw new Error('Team Leader can only lead a maximum of 2 clans');
+      }
+    } else {
+      safe.teamLeader = null;
+    }
+  }
+
+  if (safe.coders !== undefined && Array.isArray(safe.coders)) {
+    const oldCoders = current.coders || [];
+    const newCoders = safe.coders;
+
+    // Removed coders
+    for (const cId of oldCoders) {
+      if (!newCoders.includes(cId)) {
+        CoderModel.update(cId, { clan: null });
+      }
+    }
+
+    // Added coders
+    for (const cId of newCoders) {
+      if (!oldCoders.includes(cId)) {
+        CoderModel.update(cId, { clan: id });
+      }
+    }
+  }
+
+  const updatedClan = ClanModel.update(id, safe);
+  return enrich(updatedClan);
+};
+
 export const remove = async (id) => {
   const clan = ClanModel.remove(id);
   if (!clan) throw new Error('Clan not found');
 
-  // Limpiar referencias de clan en todos los coders afectados
+  // Cascade 1: Unset clan on all member coders
   const coders = CoderModel.getAll();
   for (const coder of coders) {
     if (coder.clan === id) {
       CoderModel.update(coder.id, { clan: null });
+    }
+  }
+
+  // Cascade 2: Unset clan on all tasks
+  const tasks = TaskModel.getAll();
+  for (const task of tasks) {
+    if (task.clanId === id) {
+      TaskModel.update(task.id, { clanId: null });
     }
   }
 

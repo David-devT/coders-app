@@ -1,21 +1,22 @@
 import { useState } from 'react';
 import { useTasks } from '../../hooks/useTasks';
+import { useCoders } from '../../hooks/useCoders';
+import { useClans } from '../../hooks/useClans';
 import TaskColumn from './TaskColumn';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, ListTodo, Loader2, Trash2, RotateCcw, Clock, User, X } from 'lucide-react';
 import type { TaskStatus } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
 
-// Configuración de columnas del tablero Kanban
 const columns: { title: string; status: TaskStatus; colorClass: string }[] = [
-  { title: 'Pending', status: 'pending', colorClass: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' },
-  { title: 'In Review', status: 'review', colorClass: 'bg-neon-cyan/10 border-neon-cyan/30 text-neon-cyan' },
-  { title: 'Approved', status: 'approved', colorClass: 'bg-neon-green/10 border-neon-green/30 text-neon-green' },
-  { title: 'Rejected', status: 'rejected', colorClass: 'bg-destructive/10 border-destructive/30 text-destructive' },
+  { title: 'Pending', status: 'pending', colorClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  { title: 'In Review', status: 'review', colorClass: 'bg-neon-cyan/10 text-neon-cyan border-neon-cyan/20' },
+  { title: 'Approved', status: 'approved', colorClass: 'bg-neon-green/10 text-neon-green border-neon-green/20' },
+  { title: 'Rejected', status: 'rejected', colorClass: 'bg-destructive/10 text-destructive border-destructive/20' },
 ];
 
 export default function TaskBoard() {
@@ -24,44 +25,39 @@ export default function TaskBoard() {
   const isTeamLeader = 'role' in (user || {}) && (user as { role: string }).role === 'teamLeader';
   const canCreateTasks = isAdmin || isTeamLeader;
 
-  // Estado del formulario de nueva tarea
+  const { coders } = useCoders();
+  const { clans } = useClans();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
     assigneeId: '',
+    clanId: '',
   });
 
-  // Estado del panel de tareas eliminadas
   const [showDeleted, setShowDeleted] = useState(false);
-
-  // Solo fetch tareas eliminadas cuando el panel está abierto (lazy loading)
   const { tasks, tasksDeleted, createTask, updateTaskStatus, deleteTask, restoreTask } = useTasks(showDeleted);
 
-  // Filtrar tareas por estado y ordenar por prioridad (high > medium > low)
   const priorityOrder = { high: 0, medium: 1, low: 2 };
   const tasksByStatus = (status: TaskStatus) => {
     return (tasks.data?.filter((t) => t.status === status) || [])
       .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
   };
 
-  // Manejar cambio de estado
   const handleStatusChange = (taskId: string, status: TaskStatus) => {
     updateTaskStatus.mutate({ id: taskId, status });
   };
 
-  // Eliminar tarea (soft delete, solo admin)
   const handleDelete = (taskId: string) => {
     deleteTask.mutate(taskId);
   };
 
-  // Restaurar tarea eliminada (solo admin)
   const handleRestore = (taskId: string) => {
     restoreTask.mutate(taskId);
   };
 
-  // Crear nueva tarea
   const handleCreateTask = () => {
     if (!newTask.title.trim()) return;
     createTask.mutate({
@@ -69,12 +65,12 @@ export default function TaskBoard() {
       description: newTask.description,
       priority: newTask.priority,
       assigneeId: newTask.assigneeId || user?.id || '',
+      clanId: newTask.clanId || undefined,
     });
-    setNewTask({ title: '', description: '', priority: 'medium', assigneeId: '' });
+    setNewTask({ title: '', description: '', priority: 'medium', assigneeId: '', clanId: '' });
     setIsDialogOpen(false);
   };
 
-  // Loading state
   if (tasks.isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -85,112 +81,149 @@ export default function TaskBoard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Kanban Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-neon-magenta/10 border border-neon-magenta/30 flex items-center justify-center glow-magenta">
-            <ListTodo className="w-5 h-5 text-neon-magenta" />
+          <div className="w-12 h-12 rounded-xl bg-neon-magenta/15 border border-neon-magenta/30 flex items-center justify-center glow-magenta">
+            <ListTodo className="w-6 h-6 text-neon-magenta" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Task Board</h1>
-            <p className="text-sm text-muted-foreground">Manage and track team tasks</p>
+            <h1 className="text-xl font-extrabold text-foreground tracking-tight">Kanban Task Board</h1>
+            <p className="text-xs text-muted-foreground">Supervisa y gestiona entregables de equipos a través del flujo de estados</p>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          {/* Botón de tareas eliminadas (solo admin) */}
+        <div className="flex items-center gap-2">
           {isAdmin && (
             <Button
               onClick={() => setShowDeleted(!showDeleted)}
               variant="outline"
-              className={`border-border ${showDeleted ? 'bg-destructive/10 text-destructive border-destructive/30' : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'}`}
+              className={`h-10 text-xs font-bold rounded-xl border ${
+                showDeleted
+                  ? 'bg-destructive/15 text-destructive border-destructive/40'
+                  : 'glass-panel text-muted-foreground hover:text-destructive hover:bg-destructive/10'
+              }`}
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Deleted ({tasksDeleted.data?.length || 0})
+              Tasks Eliminadas ({tasksDeleted.data?.length || 0})
             </Button>
           )}
 
-          {/* Botón de crear tarea (solo admin/teamLeader) */}
           {canCreateTasks && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-neon-magenta text-background hover:bg-neon-magenta/90">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Task
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border">
-                <DialogHeader>
-                  <DialogTitle className="text-foreground">Create New Task</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="taskTitle" className="text-muted-foreground">Title</Label>
-                    <Input
-                      id="taskTitle"
-                      value={newTask.title}
-                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                      placeholder="Enter task title"
-                      className="bg-input border-border focus:border-neon-magenta focus:ring-neon-magenta/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="taskDesc" className="text-muted-foreground">Description</Label>
-                    <Input
-                      id="taskDesc"
-                      value={newTask.description}
-                      onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                      placeholder="Enter task description (optional)"
-                      className="bg-input border-border focus:border-neon-magenta focus:ring-neon-magenta/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-muted-foreground">Priority</Label>
-                    <Select
-                      value={newTask.priority}
-                      onValueChange={(v) => setNewTask({ ...newTask, priority: v as 'low' | 'medium' | 'high' })}
+            <>
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                className="h-10 bg-gradient-to-r from-neon-magenta to-purple-600 hover:from-neon-magenta/90 hover:to-purple-600/90 text-background font-bold text-xs rounded-xl shadow-lg glow-magenta"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nueva Task
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg font-bold text-foreground">Crear Nueva Task</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="taskTitle" className="text-xs font-semibold text-muted-foreground">Título de la Task</Label>
+                      <Input
+                        id="taskTitle"
+                        value={newTask.title}
+                        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                        placeholder="Ej. Configurar autenticación JWT"
+                        className="glass-input h-10 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="taskDesc" className="text-xs font-semibold text-muted-foreground">Descripción</Label>
+                      <Input
+                        id="taskDesc"
+                        value={newTask.description}
+                        onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                        placeholder="Descripción detallada de la tarea..."
+                        className="glass-input h-10 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-muted-foreground">Prioridad (Priority)</Label>
+                      <Select
+                        value={newTask.priority}
+                        onValueChange={(v) => setNewTask({ ...newTask, priority: v as 'low' | 'medium' | 'high' })}
+                      >
+                        <SelectTrigger className="glass-input h-10 rounded-xl text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="glass-panel border-white/10 text-xs">
+                          <SelectItem value="low">Low Priority</SelectItem>
+                          <SelectItem value="medium">Medium Priority</SelectItem>
+                          <SelectItem value="high">High Priority</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="assigneeSelect" className="text-xs font-semibold text-muted-foreground">Coder Asignado (Assignee)</Label>
+                      <select
+                        id="assigneeSelect"
+                        value={newTask.assigneeId}
+                        onChange={(e) => setNewTask({ ...newTask, assigneeId: e.target.value })}
+                        className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-neon-magenta focus:ring-1 focus:ring-neon-magenta/20"
+                      >
+                        <option value="">Asignar a mí mismo ({user?.name || 'Usuario Actual'})</option>
+                        {coders.data?.map((c) => (
+                          <option key={c.id} value={c.id} className="bg-card text-foreground">
+                            {c.name} ({c.clan?.name || 'Sin Clan'})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="clanSelect" className="text-xs font-semibold text-muted-foreground">Clan</Label>
+                      <select
+                        id="clanSelect"
+                        value={newTask.clanId}
+                        onChange={(e) => setNewTask({ ...newTask, clanId: e.target.value })}
+                        className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-neon-magenta focus:ring-1 focus:ring-neon-magenta/20"
+                      >
+                        <option value="">Sin Clan asignado</option>
+                        {clans.data?.map((clan) => (
+                          <option key={clan.id} value={clan.id} className="bg-card text-foreground">
+                            {clan.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <Button
+                      onClick={handleCreateTask}
+                      className="w-full h-10 bg-gradient-to-r from-neon-magenta to-purple-600 hover:from-neon-magenta/90 text-background font-bold text-xs rounded-xl shadow-lg glow-magenta mt-2"
+                      disabled={!newTask.title.trim() || createTask.isPending}
                     >
-                      <SelectTrigger className="bg-input border-border">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      {createTask.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Plus className="w-4 h-4 mr-2" />
+                      )}
+                      Crear Task
+                    </Button>
                   </div>
-                  <Button
-                    onClick={handleCreateTask}
-                    className="w-full bg-neon-magenta text-background hover:bg-neon-magenta/90"
-                    disabled={!newTask.title.trim() || createTask.isPending}
-                  >
-                    {createTask.isPending ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Plus className="w-4 h-4 mr-2" />
-                    )}
-                    Create Task
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
         </div>
       </div>
 
-      {/* Panel de tareas eliminadas (solo admin, colapsable) */}
+      {/* Deleted Tasks Drawer Panel */}
       {showDeleted && isAdmin && (
-        <div className="border border-destructive/30 rounded-lg bg-destructive/5 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
+        <div className="glass-panel border-destructive/30 rounded-2xl p-4 bg-destructive/5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-destructive uppercase tracking-wider flex items-center gap-2">
               <Trash2 className="w-4 h-4" />
-              Deleted Tasks
+              Archivo de Tasks Eliminadas
             </h3>
             <Button
               variant="ghost"
               size="icon"
-              className="w-6 h-6 hover:text-destructive"
+              className="w-6 h-6 hover:text-destructive text-muted-foreground"
               onClick={() => setShowDeleted(false)}
             >
               <X className="w-4 h-4" />
@@ -198,29 +231,29 @@ export default function TaskBoard() {
           </div>
 
           {tasksDeleted.data?.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-4">No deleted tasks</p>
+            <p className="text-xs text-muted-foreground text-center py-4">No se encontraron tasks eliminadas</p>
           ) : (
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[260px] overflow-y-auto pr-1">
               {tasksDeleted.data?.map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-2 rounded-lg bg-card/50 border border-border">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                <div key={task.id} className="flex items-center justify-between p-3 rounded-xl glass-card border-white/5">
+                  <div className="min-w-0 flex-1 mr-2">
+                    <p className="text-xs font-bold text-foreground truncate">{task.title}</p>
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-1">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        <Clock className="w-3 h-3 text-neon-cyan" />
+                        {new Date(task.createdAt).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
                       </span>
                       <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        {task.assignee?.name || 'Unassigned'}
+                        <User className="w-3 h-3 text-neon-magenta" />
+                        {task.assignee?.name || 'Sin Asignar'}
                       </span>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-8 h-8 hover:text-neon-green hover:bg-neon-green/10 shrink-0"
-                    title="Restore task"
+                    className="w-8 h-8 text-neon-green hover:bg-neon-green/10 rounded-xl shrink-0"
+                    title="Restaurar task"
                     onClick={() => handleRestore(task.id)}
                     disabled={restoreTask.isPending}
                   >
@@ -233,7 +266,7 @@ export default function TaskBoard() {
         </div>
       )}
 
-      {/* Tablero Kanban */}
+      {/* Columns Grid */}
       <div className="flex gap-4 overflow-x-auto pb-4">
         {columns.map((col) => (
           <TaskColumn

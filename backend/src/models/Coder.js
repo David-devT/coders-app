@@ -3,55 +3,65 @@ import { readJSON, writeJSON } from './db.js';
 
 const FILE = 'coders.json';
 
-// Modelo de datos para Coders: CRUD sobre archivo JSON con IDs UUID v4
 const CoderModel = {
-  // Obtener todos los coders registrados
   getAll() {
     return readJSON(FILE);
   },
 
-  // Buscar coder por ID único
   getById(id) {
-    return readJSON(FILE).find((c) => c.id === id) || null;
+    if (!id) return null;
+    const coders = readJSON(FILE);
+    return coders.find((c) => c.id === id) || null;
   },
 
-  // Buscar coder por email (used para validación de registro duplicado)
   getByEmail(email) {
-    return readJSON(FILE).find((c) => c.email === email) || null;
+    if (!email) return null;
+    const coders = readJSON(FILE);
+    const normalized = email.trim().toLowerCase();
+    return coders.find((c) => c.email && c.email.toLowerCase() === normalized) || null;
   },
 
-  // Crear un nuevo coder con UUID 自动生成 y timestamps
   create(data) {
     const coders = readJSON(FILE);
+    const now = new Date().toISOString();
     const newCoder = {
-      id: uuidv4(),
-      name: data.name,
-      email: data.email,
+      id: data.id || uuidv4(),
+      name: data.name?.trim(),
+      email: data.email?.trim().toLowerCase(),
       password: data.password,
       clan: data.clan || null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: data.createdAt || now,
+      updatedAt: data.updatedAt || now,
     };
     coders.push(newCoder);
     writeJSON(FILE, coders);
     return newCoder;
   },
 
-  // Actualizar campos de un coder existente por ID
   update(id, data) {
     const coders = readJSON(FILE);
     const index = coders.findIndex((c) => c.id === id);
     if (index === -1) return null;
-    coders[index] = { ...coders[index], ...data, updatedAt: new Date().toISOString() };
+
+    const current = coders[index];
+    const updated = {
+      ...current,
+      ...data,
+      email: data.email !== undefined ? data.email.trim().toLowerCase() : current.email,
+      name: data.name !== undefined ? data.name.trim() : current.name,
+      updatedAt: new Date().toISOString(),
+    };
+
+    coders[index] = updated;
     writeJSON(FILE, coders);
-    return coders[index];
+    return updated;
   },
 
-  // Eliminar un coder del array por ID
   remove(id) {
     const coders = readJSON(FILE);
     const index = coders.findIndex((c) => c.id === id);
     if (index === -1) return null;
+
     const [deleted] = coders.splice(index, 1);
     writeJSON(FILE, coders);
     return deleted;

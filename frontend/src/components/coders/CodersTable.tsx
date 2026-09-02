@@ -3,26 +3,21 @@ import { useCoders } from '../../hooks/useCoders';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Pencil, Trash2, Plus, Search } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, Code2, Shield } from 'lucide-react';
 import CoderForm from './CoderForm';
 import DeleteCoderDialog from './DeleteCoderDialog';
 import { useAuthStore } from '../../stores/authStore';
 import type { Coder } from '../../types';
 
-// Tabla de coders con búsqueda, creación, edición y eliminación
-// Solo admin y teamLeader pueden crear, editar y eliminar coders.
-// Los coders solo pueden ver la lista.
 export default function CodersTable() {
   const { coders, createCoder, updateCoder, deleteCoder } = useCoders();
   const user = useAuthStore((s) => s.user);
-  // Un coder es un usuario sin campo 'role' o con role === 'coder'
   const isCoder = !('role' in (user || {})) || (user as { role?: string }).role === 'coder';
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedCoder, setSelectedCoder] = useState<Coder | null>(null);
   const [search, setSearch] = useState('');
 
-  // Filtrado client-side por nombre, email o nombre de clan
   const filtered = coders.data?.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -52,87 +47,107 @@ export default function CodersTable() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Coders</h1>
-        {/* Botón "Add Coder": solo visible para admin y teamLeader */}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-neon-cyan/15 border border-neon-cyan/30 flex items-center justify-center glow-cyan">
+            <Code2 className="w-6 h-6 text-neon-cyan" />
+          </div>
+          <div>
+            <h1 className="text-xl font-extrabold text-foreground tracking-tight">Directorio de Coders</h1>
+            <p className="text-xs text-muted-foreground">Desarrolladores registrados y miembros de equipo</p>
+          </div>
+        </div>
+
         {!isCoder && (
-          <Button onClick={() => setFormOpen(true)} className="bg-neon-cyan text-background hover:bg-neon-cyan/90">
-            <Plus className="w-4 h-4 mr-2" /> Add Coder
+          <Button
+            onClick={() => setFormOpen(true)}
+            className="h-10 bg-gradient-to-r from-neon-cyan to-blue-600 hover:from-neon-cyan/90 text-background font-bold text-xs rounded-xl shadow-lg glow-cyan"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Agregar Coder
           </Button>
         )}
       </div>
 
-      {/* Campo de búsqueda */}
+      {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search by name, email or clan..."
+          placeholder="Buscar por nombre, correo o Clan..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-input border-border focus:border-neon-cyan focus:ring-neon-cyan/20"
+          className="glass-input h-11 pl-10 rounded-xl text-xs"
         />
       </div>
 
-      {/* Spinner de carga o tabla de datos */}
+      {/* Table Container */}
       {coders.isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-neon-cyan/30 border-t-neon-cyan rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-16">
+          <div className="w-8 h-8 border-2 border-neon-cyan/30 border-t-neon-cyan rounded-full animate-spin glow-cyan" />
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
           <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-border">
-                <TableHead className="text-muted-foreground">#</TableHead>
-                <TableHead className="text-muted-foreground">Name</TableHead>
-                <TableHead className="text-muted-foreground">Email</TableHead>
-                <TableHead className="text-muted-foreground">Clan</TableHead>
-                {/* Columna "Actions": solo visible para admin y teamLeader */}
-                {!isCoder && <TableHead className="text-muted-foreground text-right">Actions</TableHead>}
+            <TableHeader className="bg-white/5">
+              <TableRow className="hover:bg-transparent border-white/5">
+                <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Perfil Coder</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Correo</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Clan Asignado</TableHead>
+                {!isCoder && <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isCoder ? 4 : 5} className="text-center text-muted-foreground py-8">
-                    No coders found
+                  <TableCell colSpan={isCoder ? 4 : 5} className="text-center text-muted-foreground py-12 text-xs">
+                    No se encontraron Coders que coincidan con la búsqueda
                   </TableCell>
                 </TableRow>
               ) : (
                 filtered?.map((coder, i) => (
-                  <TableRow key={coder.id} className="border-border hover:bg-muted/50">
-                    <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                    <TableCell className="font-medium text-foreground">{coder.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{coder.email}</TableCell>
+                  <TableRow key={coder.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                    <TableCell className="text-xs font-medium text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-neon-cyan/15 border border-neon-cyan/30 flex items-center justify-center font-bold text-xs text-neon-cyan">
+                          {coder.name.charAt(0)}
+                        </div>
+                        <span className="font-bold text-xs text-foreground">{coder.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{coder.email}</TableCell>
                     <TableCell>
                       {coder.clan ? (
-                        <span className="px-2 py-1 rounded-full text-xs bg-neon-magenta/10 text-neon-magenta border border-neon-magenta/20">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-neon-magenta/15 text-neon-magenta border border-neon-magenta/30">
+                          <Shield className="w-3 h-3" />
                           {coder.clan.name}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">-</span>
+                        <span className="text-xs text-muted-foreground/60 italic">Sin Asignar</span>
                       )}
                     </TableCell>
-                    {/* Botones editar/eliminar: solo visible para admin y teamLeader */}
                     {!isCoder && (
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="hover:text-neon-cyan hover:bg-neon-cyan/10"
+                            className="w-8 h-8 text-muted-foreground hover:text-neon-cyan hover:bg-neon-cyan/15 rounded-xl"
                             onClick={() => { setSelectedCoder(coder); setFormOpen(true); }}
+                            title="Editar Coder"
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="hover:text-destructive hover:bg-destructive/10"
+                            className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl"
                             onClick={() => { setSelectedCoder(coder); setDeleteOpen(true); }}
+                            title="Eliminar Coder"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </TableCell>
@@ -145,7 +160,7 @@ export default function CodersTable() {
         </div>
       )}
 
-      {/* Diálogo de formulario: crear o editar coder */}
+      {/* Form Dialog */}
       <CoderForm
         open={formOpen}
         onClose={() => { setFormOpen(false); setSelectedCoder(null); }}
@@ -154,7 +169,7 @@ export default function CodersTable() {
         isLoading={createCoder.isPending || updateCoder.isPending}
       />
 
-      {/* Diálogo de confirmación de eliminación */}
+      {/* Delete Dialog */}
       <DeleteCoderDialog
         open={deleteOpen}
         onClose={() => { setDeleteOpen(false); setSelectedCoder(null); }}

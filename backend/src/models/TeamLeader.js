@@ -3,55 +3,65 @@ import { readJSON, writeJSON } from './db.js';
 
 const FILE = 'teamLeaders.json';
 
-// Modelo de datos para Team Leaders: CRUD sobre archivo JSON con IDs UUID v4
 const TeamLeaderModel = {
-  // Obtener todos los team leaders registrados
   getAll() {
     return readJSON(FILE);
   },
 
-  // Buscar team leader por ID único
   getById(id) {
-    return readJSON(FILE).find((t) => t.id === id) || null;
+    if (!id) return null;
+    const teamLeaders = readJSON(FILE);
+    return teamLeaders.find((t) => t.id === id) || null;
   },
 
-  // Buscar team leader por email (used para validación de registro duplicado)
   getByEmail(email) {
-    return readJSON(FILE).find((t) => t.email === email) || null;
+    if (!email) return null;
+    const teamLeaders = readJSON(FILE);
+    const normalized = email.trim().toLowerCase();
+    return teamLeaders.find((t) => t.email && t.email.toLowerCase() === normalized) || null;
   },
 
-  // Crear un nuevo team leader con rol por defecto 'teamLeader'
   create(data) {
     const teamLeaders = readJSON(FILE);
+    const now = new Date().toISOString();
     const newTL = {
-      id: uuidv4(),
-      name: data.name,
-      email: data.email,
+      id: data.id || uuidv4(),
+      name: data.name?.trim(),
+      email: data.email?.trim().toLowerCase(),
       password: data.password,
       role: data.role || 'teamLeader',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: data.createdAt || now,
+      updatedAt: data.updatedAt || now,
     };
     teamLeaders.push(newTL);
     writeJSON(FILE, teamLeaders);
     return newTL;
   },
 
-  // Actualizar campos de un team leader existente por ID
   update(id, data) {
     const teamLeaders = readJSON(FILE);
     const index = teamLeaders.findIndex((t) => t.id === id);
     if (index === -1) return null;
-    teamLeaders[index] = { ...teamLeaders[index], ...data, updatedAt: new Date().toISOString() };
+
+    const current = teamLeaders[index];
+    const updated = {
+      ...current,
+      ...data,
+      email: data.email !== undefined ? data.email.trim().toLowerCase() : current.email,
+      name: data.name !== undefined ? data.name.trim() : current.name,
+      updatedAt: new Date().toISOString(),
+    };
+
+    teamLeaders[index] = updated;
     writeJSON(FILE, teamLeaders);
-    return teamLeaders[index];
+    return updated;
   },
 
-  // Eliminar un team leader del array por ID
   remove(id) {
     const teamLeaders = readJSON(FILE);
     const index = teamLeaders.findIndex((t) => t.id === id);
     if (index === -1) return null;
+
     const [deleted] = teamLeaders.splice(index, 1);
     writeJSON(FILE, teamLeaders);
     return deleted;

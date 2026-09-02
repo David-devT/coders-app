@@ -1,71 +1,129 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import CoderModel from '../models/Coder.js';
 import TeamLeaderModel from '../models/TeamLeader.js';
 import ClanModel from '../models/Clan.js';
 
-// Genera un token JWT con id, email y role del usuario, expira en 24h
+const JWT_SECRET = process.env.JWT_SECRET || 'coders_app_super_secret_jwt_key_2026!';
+
+/**
+ * Generates a signed JWT valid for 24h
+ * @param {object} user 
+ * @param {string} role 
+ * @returns {string}
+ */
 function generateToken(user, role) {
-  return jwt.sign({ id: user.id, email: user.email, role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign(
+    { id: user.id, email: user.email, role },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
 }
 
-// Elimina el campo password del objeto antes de retornarlo al cliente
+/**
+ * Strips password field from user object
+ * @param {object} user 
+ * @returns {object}
+ */
 function sanitize(user) {
+  if (!user) return null;
   const { password, ...rest } = user;
   return rest;
 }
 
-// Registro de usuario público: solo permite crear cuentas con rol 'coder'.
-// Para crear team leaders o admins, usar los endpoints protegidos /api/team-leaders.
+/**
+ * Registers a new user account with default role 'coder'.
+ * @param {{ name: string, email: string, password: string }} data 
+ * @returns {Promise<{ user: object, token: string }>}
+ */
 export const register = async ({ name, email, password }) => {
-  const existing = CoderModel.getByEmail(email) || TeamLeaderModel.getByEmail(email);
-  if (existing) throw new Error('Email already registered');
+  if (!name || !name.trim()) throw new Error('Name is required');
+  if (!email || !email.trim()) throw new Error('Email is required');
+  if (!password || password.length < 6) throw new Error('Password must be at least 6 characters');
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const existingCoder = CoderModel.getByEmail(normalizedEmail);
+  const existingTL = TeamLeaderModel.getByEmail(normalizedEmail);
+  if (existingCoder || existingTL) {
+    throw new Error('Email already registered');
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const coder = CoderModel.create({ name, email, password: hashedPassword });
+  const coder = CoderModel.create({
+    name: name.trim(),
+    email: normalizedEmail,
+    password: hashedPassword,
+  });
+
   const token = generateToken(coder, 'coder');
-  return { user: sanitize(coder), token };
+  return {
+    user: { ...sanitize(coder), role: 'coder' },
+    token,
+  };
 };
 
-// Login: busca el email en ambos modelos, valida password con bcrypt y retorna token JWT
+/**
+ * Logs in a user, authenticating credentials across Coders and Team Leaders.
+ * @param {{ email: string, password: string }} data 
+ * @returns {Promise<{ user: object, token: string }>}
+ */
 export const login = async ({ email, password }) => {
-  let user = CoderModel.getByEmail(email);
+  if (!email || !password) throw new Error('Email and password are required');
+
+  const normalizedEmail = email.trim().toLowerCase();
+  let user = CoderModel.getByEmail(normalizedEmail);
   let role = 'coder';
 
   if (!user) {
-    user = TeamLeaderModel.getByEmail(email);
+    user = TeamLeaderModel.getByEmail(normalizedEmail);
     role = user?.role || 'teamLeader';
   }
 
-  if (!user) throw new Error('Invalid credentials');
+  if (!user) {
+    throw new Error('Invalid credentials');
+  }
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error('Invalid credentials');
+  if (!isMatch) {
+    throw new Error('Invalid credentials');
+  }
 
   const token = generateToken(user, role);
-  return { user: sanitize(user), token };
+  return {
+    user: { ...sanitize(user), role },
+    token,
+  };
 };
 
-// Retorna el perfil del usuario autenticado, enriquecido con datos del clan(s) asociado(s)
+/**
+ * Retrieves the profile of the authenticated user, enriched with clan information.
+ * @param {string} userId 
+ * @param {string} role 
+ * @returns {Promise<object|null>}
+ */
 export const getMe = async (userId, role) => {
   if (role === 'coder') {
     const user = CoderModel.getById(userId);
     if (!user) return null;
     const s = sanitize(user);
-    // Adjunta información resumida del clan al que pertenece el coder
     if (s.clan) {
       const clan = ClanModel.getById(s.clan);
       s.clan = clan ? { id: clan.id, name: clan.name } : null;
     }
-    return s;
+    return { ...s, role: 'coder' };
   }
 
   const user = TeamLeaderModel.getById(userId);
   if (!user) return null;
   const s = sanitize(user);
-  // Filtra y adjunta la lista de clans que lidera este usuario
-  s.clans = ClanModel.getAll()
+  const clans = ClanModel.getAll();
+  s.clans = clans
     .filter((c) => c.teamLeader === s.id)
     .map((c) => ({ id: c.id, name: c.name }));
+
   return s;
 };
