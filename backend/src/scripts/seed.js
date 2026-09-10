@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { writeJSON } from '../models/db.js';
 
-async function seed() {
+export async function seed() {
   console.log('🌱 Inicializando datos iniciales (Seed) en backend/src/data/...');
 
   const now = new Date().toISOString();
@@ -137,7 +137,10 @@ async function seed() {
   console.log('   - Coder 2:     mateo@coders.app    / Coder123!');
 }
 
-seed().catch((err) => {
-  console.error('❌ Error ejecutando seed:', err);
-  process.exit(1);
-});
+// Auto-ejecutar si se corre directamente con `node seed.js`
+if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('seed.js')) {
+  seed().catch((err) => {
+    console.error('❌ Error ejecutando seed:', err);
+    process.exit(1);
+  });
+}

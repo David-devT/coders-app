@@ -13,9 +13,13 @@ export default defineConfig({
     },
   },
   server: {
-    // Proxy de /api al backend en desarrollo (evita CORS del navegador)
+    // Proxy de /api al backend en desarrollo (evita CORS y fallas de IPv6 localhost en Windows)
     proxy: {
-      '/api': 'http://localhost:3000',
+      '/api': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

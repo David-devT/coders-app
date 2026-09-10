@@ -2,9 +2,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import app from './server.js';
+import { initDatabase } from './config/initDatabase.js';
 
-const PORT = process.env.APP_PORT || 3000;
+const PORT = Number(process.env.APP_PORT) || 3000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Coders App Server listening on port ${PORT}`);
+// Inicializar y verificar cuentas por defecto antes de aceptar conexiones
+await initDatabase();
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Coders App Server listening on http://127.0.0.1:${PORT}`);
 });

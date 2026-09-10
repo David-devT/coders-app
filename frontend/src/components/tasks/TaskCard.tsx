@@ -12,15 +12,15 @@ interface TaskCardProps {
 }
 
 const priorityStyles = {
-  low: 'bg-neon-green/10 text-neon-green border-neon-green/30',
-  medium: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  high: 'bg-destructive/15 text-destructive border-destructive/30',
+  low: 'bg-[#7B7F8A]/20 text-[#E9E6E7] border-[#7B7F8A]/35',
+  medium: 'bg-[#AB978C]/20 text-[#AB978C] border-[#AB978C]/35',
+  high: 'bg-[#E05252]/20 text-[#E05252] border-[#E05252]/35',
 };
 
 const priorityAccentTop = {
-  low: 'before:bg-neon-green',
-  medium: 'before:bg-amber-400',
-  high: 'before:bg-destructive',
+  low: 'before:bg-[#7B7F8A]',
+  medium: 'before:bg-[#AB978C]',
+  high: 'before:bg-[#E05252]',
 };
 
 export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardProps) {
@@ -38,8 +38,21 @@ export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardPro
     return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
   };
 
+  const canDrag = canMarkForReview || canApproveOrReject || canReopen;
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', task.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
-    <Card className={`glass-card relative overflow-hidden border-white/10 hover:border-neon-cyan/40 hover:-translate-y-0.5 transition-all duration-200 group before:absolute before:top-0 before:left-0 before:right-0 before:h-1 ${priorityAccentTop[task.priority]}`}>
+    <Card
+      draggable={canDrag}
+      onDragStart={handleDragStart}
+      className={`glass-card relative overflow-hidden border-white/5 hover:border-[#AB978C]/40 hover:-translate-y-0.5 transition-all duration-200 group before:absolute before:top-0 before:left-0 before:right-0 before:h-1 ${
+        canDrag ? 'cursor-grab active:cursor-grabbing' : ''
+      } ${priorityAccentTop[task.priority]}`}
+    >
       <CardContent className="p-3.5 space-y-2.5">
         {/* Header: Priority + Date + Actions */}
         <div className="flex items-center justify-between">
@@ -49,7 +62,7 @@ export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardPro
               {task.priority}
             </Badge>
             {task.clan && (
-              <span className="text-[10px] font-semibold text-neon-magenta flex items-center gap-1 px-1.5 py-0.5 rounded bg-neon-magenta/10 border border-neon-magenta/20">
+              <span className="text-[10px] font-semibold text-[#6B7C98] flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#14171E] border border-[#6B7C98]/30">
                 <Shield className="w-2.5 h-2.5" />
                 {task.clan.name}
               </span>
@@ -75,7 +88,7 @@ export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardPro
         </div>
 
         {/* Title */}
-        <h4 className="font-bold text-sm text-foreground leading-snug group-hover:text-neon-cyan transition-colors">
+        <h4 className="font-bold text-sm text-foreground leading-snug group-hover:text-[#AB978C] transition-colors">
           {task.title}
         </h4>
 
@@ -89,7 +102,7 @@ export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardPro
         {/* Assignee Footer */}
         <div className="flex items-center justify-between pt-1 border-t border-white/5">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-neon-cyan border border-white/10">
+            <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-bold text-[#AB978C] border border-white/10">
               {task.assignee?.name?.charAt(0) || <User className="w-3 h-3" />}
             </div>
             <span className="truncate max-w-[120px]">{task.assignee?.name || 'Sin Asignar'}</span>
@@ -102,7 +115,7 @@ export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardPro
             <Button
               size="sm"
               variant="outline"
-              className="w-full text-xs h-7 border-neon-cyan/40 text-neon-cyan hover:bg-neon-cyan/15 rounded-lg font-semibold"
+              className="w-full text-xs h-7 border-[#6B7C98]/40 text-[#6B7C98] hover:bg-[#6B7C98]/15 rounded-lg font-semibold"
               onClick={() => onStatusChange(task.id, 'review')}
             >
               <CheckCircle2 className="w-3 h-3 mr-1.5" />
@@ -121,7 +134,7 @@ export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardPro
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 text-xs h-7 border-neon-green/40 text-neon-green hover:bg-neon-green/15 rounded-lg font-semibold"
+                className="flex-1 text-xs h-7 border-[#AB978C]/40 text-[#AB978C] hover:bg-[#AB978C]/15 rounded-lg font-semibold"
                 onClick={() => onStatusChange(task.id, 'approved')}
               >
                 <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -140,13 +153,13 @@ export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardPro
           )}
 
           {task.status === 'review' && !canApproveOrReject && (
-            <span className="text-[11px] text-neon-cyan italic block text-center py-1">
+            <span className="text-[11px] text-[#6B7C98] italic block text-center py-1">
               En Review...
             </span>
           )}
 
           {task.status === 'approved' && (
-            <span className="text-xs font-bold text-neon-green flex items-center gap-1.5 justify-center py-1">
+            <span className="text-xs font-bold text-[#AB978C] flex items-center gap-1.5 justify-center py-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Task Approved
             </span>

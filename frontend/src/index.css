@@ -39,9 +39,15 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
-    --color-neon-cyan: var(--neon-cyan);
-    --color-neon-magenta: var(--neon-magenta);
-    --color-neon-green: var(--neon-green);
+    /* Urban Slate Palette */
+    --color-urban-white: #E9E6E7;
+    --color-urban-charcoal: #5E5653;
+    --color-urban-slate: #7B7F8A;
+    --color-urban-sandstone: #AB978C;
+    --color-urban-blue: #6B7C98;
+    --color-urban-obsidian: #0E1015;
+    --color-urban-graphite: #14171E;
+    --color-urban-elevated: #1C2029;
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -52,41 +58,39 @@
 }
 
 :root {
-    --background: oklch(0.08 0.01 270);
-    --foreground: oklch(0.96 0.01 270);
-    --card: oklch(0.12 0.015 270);
-    --card-foreground: oklch(0.96 0.01 270);
-    --popover: oklch(0.12 0.015 270);
-    --popover-foreground: oklch(0.96 0.01 270);
-    --primary: oklch(0.75 0.19 195);
-    --primary-foreground: oklch(0.1 0 0);
-    --secondary: oklch(0.16 0.02 270);
-    --secondary-foreground: oklch(0.9 0.01 270);
-    --muted: oklch(0.15 0.015 270);
-    --muted-foreground: oklch(0.6 0.02 270);
-    --accent: oklch(0.18 0.025 270);
-    --accent-foreground: oklch(0.92 0.01 270);
-    --destructive: oklch(0.65 0.22 25);
-    --border: oklch(0.2 0.02 270 / 0.6);
-    --input: oklch(0.16 0.02 270 / 0.8);
-    --ring: oklch(0.75 0.19 195);
-    --chart-1: oklch(0.75 0.19 195);
-    --chart-2: oklch(0.75 0.22 320);
-    --chart-3: oklch(0.8 0.22 145);
-    --chart-4: oklch(0.65 0.22 25);
-    --chart-5: oklch(0.75 0.18 60);
+    /* Urban Slate Precision Theme */
+    --background: #0E1015;
+    --foreground: #E9E6E7;
+    --card: #14171E;
+    --card-foreground: #E9E6E7;
+    --popover: #1C2029;
+    --popover-foreground: #E9E6E7;
+    --primary: #AB978C;
+    --primary-foreground: #0E1015;
+    --secondary: #1C2029;
+    --secondary-foreground: #6B7C98;
+    --muted: #14171E;
+    --muted-foreground: #7B7F8A;
+    --accent: #1C2029;
+    --accent-foreground: #E9E6E7;
+    --destructive: #E05252;
+    --border: rgba(123, 127, 138, 0.18);
+    --input: #14171E;
+    --ring: #AB978C;
+    --chart-1: #AB978C;
+    --chart-2: #6B7C98;
+    --chart-3: #7B7F8A;
+    --chart-4: #5E5653;
+    --chart-5: #E05252;
     --radius: 0.75rem;
-    --sidebar: oklch(0.09 0.015 270);
-    --sidebar-foreground: oklch(0.9 0.01 270);
-    --sidebar-primary: oklch(0.75 0.19 195);
-    --sidebar-primary-foreground: oklch(0.1 0 0);
-    --sidebar-accent: oklch(0.16 0.02 270);
-    --sidebar-accent-foreground: oklch(0.95 0.01 270);
-    --sidebar-border: oklch(0.18 0.02 270 / 0.7);
-    --sidebar-ring: oklch(0.75 0.19 195);
-    --neon-cyan: oklch(0.82 0.19 195);
-    --neon-magenta: oklch(0.75 0.24 320);
-    --neon-green: oklch(0.82 0.22 145);
+    --sidebar: #14171E;
+    --sidebar-foreground: #7B7F8A;
+    --sidebar-primary: #AB978C;
+    --sidebar-primary-foreground: #0E1015;
+    --sidebar-accent: #1C2029;
+    --sidebar-accent-foreground: #E9E6E7;
+    --sidebar-border: rgba(123, 127, 138, 0.15);
+    --sidebar-ring: #AB978C;
 }
 
 @layer base {
@@ -94,10 +98,11 @@
         @apply border-border outline-ring/40;
     }
     body {
-        @apply bg-background text-foreground selection:bg-neon-cyan/20 selection:text-neon-cyan;
+        @apply bg-background text-foreground selection:bg-[#AB978C]/30 selection:text-[#E9E6E7];
+        background-color: #0E1015;
         background-image: 
-            radial-gradient(at 0% 0%, oklch(0.15 0.05 270 / 0.3) 0px, transparent 50%),
-            radial-gradient(at 100% 100%, oklch(0.14 0.06 320 / 0.25) 0px, transparent 50%);
+            radial-gradient(at 0% 0%, rgba(107, 124, 152, 0.08) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(20, 23, 30, 0.95) 0px, transparent 60%);
         background-attachment: fixed;
     }
     html {
@@ -106,57 +111,67 @@
 }
 
 @layer utilities {
-    /* Glassmorphism & Cyber Card Utilities */
+    /* Glassmorphism & Refined Slate Utilities (StitchMCP Urban Slate Precision) */
     .glass-panel {
-        background: rgba(18, 24, 38, 0.65);
+        background: rgba(20, 23, 30, 0.85);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(123, 127, 138, 0.16);
+        border-top: 1px solid rgba(233, 230, 231, 0.12);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
     .glass-card {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(16, 21, 33, 0.75);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        background: rgba(28, 32, 41, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(123, 127, 138, 0.18);
+        border-top: 1px solid rgba(233, 230, 231, 0.15);
+        box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(233, 230, 231, 0.06);
+    }
+    .glass-elevated {
+        background: linear-gradient(135deg, rgba(28, 32, 41, 0.9) 0%, rgba(20, 23, 30, 0.95) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(123, 127, 138, 0.22);
+        border-top: 1px solid rgba(171, 151, 140, 0.3);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    }
+    .kpi-card {
+        background: rgba(20, 23, 30, 0.82);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(123, 127, 138, 0.18);
+        border-top: 1px solid rgba(171, 151, 140, 0.25);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(171, 151, 140, 0.4);
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(171, 151, 140, 0.12);
     }
     .glass-input {
-        background: rgba(14, 19, 31, 0.7);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #14171E;
+        border: 1px solid rgba(123, 127, 138, 0.22);
+        color: #E9E6E7;
         transition: all 0.2s ease-in-out;
     }
     .glass-input:focus {
-        border-color: var(--neon-cyan);
-        box-shadow: 0 0 15px oklch(0.82 0.19 195 / 0.25);
+        border-color: #AB978C;
+        box-shadow: 0 0 0 1px #0E1015, 0 0 0 2px rgba(171, 151, 140, 0.4);
     }
 
-    /* Glow Effects */
-    .glow-cyan {
-        box-shadow: 0 0 16px oklch(0.82 0.19 195 / 0.35), 0 0 30px oklch(0.82 0.19 195 / 0.15);
+    /* Refined Luxury Glow Effects */
+    .glow-bronze {
+        box-shadow: 0 0 16px rgba(171, 151, 140, 0.25), 0 0 32px rgba(171, 151, 140, 0.1);
     }
-    .glow-magenta {
-        box-shadow: 0 0 16px oklch(0.75 0.24 320 / 0.35), 0 0 30px oklch(0.75 0.24 320 / 0.15);
-    }
-    .glow-green {
-        box-shadow: 0 0 16px oklch(0.82 0.22 145 / 0.35), 0 0 30px oklch(0.82 0.22 145 / 0.15);
+    .glow-slate {
+        box-shadow: 0 0 16px rgba(107, 124, 152, 0.25), 0 0 32px rgba(107, 124, 152, 0.1);
     }
 
-    .text-neon-cyan { color: var(--neon-cyan); }
-    .text-neon-magenta { color: var(--neon-magenta); }
-    .text-neon-green { color: var(--neon-green); }
-
-    /* Gradient Text */
-    .text-gradient-cyan {
-        background: linear-gradient(135deg, #00F0FF 0%, #7000FF 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .text-gradient-magenta {
-        background: linear-gradient(135deg, #FF007A 0%, #9D00FF 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+    /* Compatibility aliases */
+    .glow-cyan { box-shadow: 0 0 16px rgba(107, 124, 152, 0.25); }
+    .glow-seaweed { box-shadow: 0 0 16px rgba(123, 127, 138, 0.25); }
+    .glow-champagne { box-shadow: 0 0 16px rgba(171, 151, 140, 0.25); }
 }
 
 /* Custom Scrollbars */

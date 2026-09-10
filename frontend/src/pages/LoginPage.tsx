@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuthStore } from '../stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,7 +95,8 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorInfo(null);
 
-    if (!isValidEmail(email)) {
+    const cleanEmail = email.trim();
+    if (!isValidEmail(cleanEmail)) {
       setErrorInfo({
         message: 'Por favor ingresa un correo electrónico válido',
         type: 'credentials',
@@ -107,9 +109,11 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (mode === 'register') {
-        await register(name, email, password);
+        await register(name.trim(), cleanEmail, password);
+        toast.success('¡Perfil de Coder registrado exitosamente!');
       } else {
-        await login(email, password);
+        await login(cleanEmail, password);
+        toast.success('¡Bienvenido al Workspace de Coders!');
       }
       navigate('/dashboard');
     } catch (err: unknown) {
@@ -127,20 +131,20 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
       {/* Background Glow Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-neon-cyan/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-neon-magenta/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#AB978C]/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#6B7C98]/10 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative z-10">
         
         {/* Left Side: Brand Promo / Platform Capabilities */}
         <div className="md:col-span-5 space-y-6 hidden md:block">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel border border-neon-cyan/30 text-neon-cyan text-xs font-semibold tracking-wide">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel border border-[#AB978C]/30 text-[#AB978C] text-xs font-semibold tracking-wide">
             <Sparkles className="w-3.5 h-3.5" />
             PLATAFORMA FULLSTACK
           </div>
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight text-foreground leading-tight">
-              Organiza tu fuerza técnica con <span className="text-gradient-cyan">Precisión</span> & <span className="text-gradient-magenta">Velocidad</span>.
+              Organiza tu fuerza técnica con <span className="text-[#AB978C]">Precisión</span> & <span className="text-[#6B7C98]">Velocidad</span>.
             </h1>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
               Task Board en tiempo real, gestión de Clans y autenticación RBAC jerárquica.
@@ -150,7 +154,7 @@ export default function LoginPage() {
           {/* Platform Feature Cards */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center gap-3 p-3 rounded-xl glass-panel border-white/5">
-              <div className="w-8 h-8 rounded-lg bg-neon-cyan/15 border border-neon-cyan/30 flex items-center justify-center text-neon-cyan shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#6B7C98]/20 border border-[#6B7C98]/30 flex items-center justify-center text-[#6B7C98] shrink-0">
                 <Layers className="w-4 h-4" />
               </div>
               <div>
@@ -160,7 +164,7 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-xl glass-panel border-white/5">
-              <div className="w-8 h-8 rounded-lg bg-neon-magenta/15 border border-neon-magenta/30 flex items-center justify-center text-neon-magenta shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#AB978C]/20 border border-[#AB978C]/30 flex items-center justify-center text-[#AB978C] shrink-0">
                 <ListTodo className="w-4 h-4" />
               </div>
               <div>
@@ -170,7 +174,7 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-xl glass-panel border-white/5">
-              <div className="w-8 h-8 rounded-lg bg-neon-green/15 border border-neon-green/30 flex items-center justify-center text-neon-green shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#5E5653]/30 border border-[#7B7F8A]/30 flex items-center justify-center text-[#E9E6E7] shrink-0">
                 <Shield className="w-4 h-4" />
               </div>
               <div>
@@ -185,8 +189,8 @@ export default function LoginPage() {
         <div className="md:col-span-7">
           <div className={`glass-card p-8 rounded-2xl relative ${shake ? 'animate-shake' : 'animate-fade-in-scale'}`}>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-xl bg-neon-cyan/15 border border-neon-cyan/40 flex items-center justify-center glow-cyan">
-                <Zap className="w-6 h-6 text-neon-cyan animate-pulse-soft" />
+              <div className="w-11 h-11 rounded-xl bg-[#AB978C]/20 border border-[#AB978C]/40 flex items-center justify-center glow-bronze">
+                <Zap className="w-6 h-6 text-[#AB978C] animate-pulse-soft" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-foreground tracking-tight">Coders App</h2>
@@ -247,7 +251,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 mt-2 bg-gradient-to-r from-neon-cyan to-blue-600 hover:from-neon-cyan/90 hover:to-blue-600/90 text-background font-bold text-sm rounded-xl shadow-lg glow-cyan transition-all"
+                className="w-full h-11 mt-2 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-sm rounded-xl shadow-lg glow-bronze transition-all"
                 disabled={loading}
               >
                 {loading ? (
@@ -265,14 +269,14 @@ export default function LoginPage() {
               {isRegister ? (
                 <>
                   ¿Ya tienes cuenta?{' '}
-                  <button type="button" onClick={toggleMode} className="text-neon-cyan hover:underline font-semibold ml-1">
+                  <button type="button" onClick={toggleMode} className="text-[#AB978C] hover:text-[#E9E6E7] hover:underline font-semibold ml-1">
                     Iniciar Sesión
                   </button>
                 </>
               ) : (
                 <>
                   ¿Necesitas una cuenta?{' '}
-                  <button type="button" onClick={toggleMode} className="text-neon-cyan hover:underline font-semibold ml-1">
+                  <button type="button" onClick={toggleMode} className="text-[#AB978C] hover:text-[#E9E6E7] hover:underline font-semibold ml-1">
                     Crear Perfil Coder
                   </button>
                 </>

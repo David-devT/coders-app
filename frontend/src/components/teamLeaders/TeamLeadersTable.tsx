@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useTeamLeaders } from '../../hooks/useTeamLeaders';
 import { useCoders } from '../../hooks/useCoders';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Plus, Search, ArrowUp, ArrowDown, Users, ShieldCheck, Shield } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, ArrowUp, ArrowDown, Users, ShieldCheck, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
 import TeamLeaderForm from './TeamLeaderForm';
 import DeleteTeamLeaderDialog from './DeleteTeamLeaderDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -22,6 +23,14 @@ export default function TeamLeadersTable() {
   const [selectedCoderId, setSelectedCoderId] = useState('');
   const [search, setSearch] = useState('');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
   const filtered = teamLeaders.data?.filter(
     (t) =>
       t.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -29,39 +38,68 @@ export default function TeamLeadersTable() {
       t.role.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalItems = filtered?.length || 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const paginatedItems = filtered?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const handleCreate = async (data: Record<string, string>) => {
-    await createTeamLeader.mutateAsync(data as { name: string; email: string; password: string });
-    setFormOpen(false);
+    try {
+      await createTeamLeader.mutateAsync(data as { name: string; email: string; password: string });
+      toast.success('¡Team Leader creado exitosamente!');
+      setFormOpen(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Error al crear Team Leader');
+    }
   };
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (selectedTL) {
-      await updateTeamLeader.mutateAsync({ id: selectedTL.id, data });
-      setFormOpen(false);
-      setSelectedTL(null);
+      try {
+        await updateTeamLeader.mutateAsync({ id: selectedTL.id, data });
+        toast.success('¡Team Leader actualizado exitosamente!');
+        setFormOpen(false);
+        setSelectedTL(null);
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || 'Error al actualizar Team Leader');
+      }
     }
   };
 
   const handleDelete = async () => {
     if (selectedTL) {
-      await deleteTeamLeader.mutateAsync(selectedTL.id);
-      setDeleteOpen(false);
-      setSelectedTL(null);
+      try {
+        await deleteTeamLeader.mutateAsync(selectedTL.id);
+        toast.success('¡Team Leader eliminado correctamente!');
+        setDeleteOpen(false);
+        setSelectedTL(null);
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || 'Error al eliminar Team Leader');
+      }
     }
   };
 
   const handlePromote = async () => {
     if (!selectedCoderId) return;
-    await promoteCoder.mutateAsync(selectedCoderId);
-    setPromoteOpen(false);
-    setSelectedCoderId('');
+    try {
+      await promoteCoder.mutateAsync(selectedCoderId);
+      toast.success('¡Coder promovido a Team Leader con éxito!');
+      setPromoteOpen(false);
+      setSelectedCoderId('');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Error al promover coder');
+    }
   };
 
   const handleDemote = async () => {
     if (!selectedTL) return;
-    await demoteTL.mutateAsync(selectedTL.id);
-    setDemoteOpen(false);
-    setSelectedTL(null);
+    try {
+      await demoteTL.mutateAsync(selectedTL.id);
+      toast.success('¡Team Leader degradado a Coder correctamente!');
+      setDemoteOpen(false);
+      setSelectedTL(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Error al degradar Team Leader');
+    }
   };
 
   return (
@@ -69,8 +107,8 @@ export default function TeamLeadersTable() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-neon-green/15 border border-neon-green/30 flex items-center justify-center glow-green">
-            <Users className="w-6 h-6 text-neon-green" />
+          <div className="w-12 h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze">
+            <Users className="w-6 h-6 text-[#AB978C]" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold text-foreground tracking-tight">Directorio de Team Leaders</h1>
@@ -81,13 +119,13 @@ export default function TeamLeadersTable() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setPromoteOpen(true)}
-            className="h-10 glass-panel border border-neon-cyan/40 text-neon-cyan hover:bg-neon-cyan/15 font-bold text-xs rounded-xl"
+            className="h-10 glass-panel border border-[#6B7C98]/40 text-[#6B7C98] hover:bg-[#6B7C98]/15 font-bold text-xs rounded-xl"
           >
             <ArrowUp className="w-4 h-4 mr-2" /> Promover Coder
           </Button>
           <Button
             onClick={() => setFormOpen(true)}
-            className="h-10 bg-gradient-to-r from-neon-green to-emerald-600 hover:from-neon-green/90 text-background font-bold text-xs rounded-xl shadow-lg glow-green"
+            className="h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all"
           >
             <Plus className="w-4 h-4 mr-2" /> Agregar Team Leader
           </Button>
@@ -108,7 +146,7 @@ export default function TeamLeadersTable() {
       {/* Table Container */}
       {teamLeaders.isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-neon-green/30 border-t-neon-green rounded-full animate-spin glow-green" />
+          <div className="w-8 h-8 border-2 border-[#AB978C]/30 border-t-[#AB978C] rounded-full animate-spin glow-bronze" />
         </div>
       ) : (
         <div className="glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
@@ -131,12 +169,12 @@ export default function TeamLeadersTable() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered?.map((tl, i) => (
+                paginatedItems?.map((tl, i) => (
                   <TableRow key={tl.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                    <TableCell className="text-xs font-medium text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell className="text-xs font-medium text-muted-foreground">{(currentPage - 1) * pageSize + i + 1}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-neon-green/15 border border-neon-green/30 flex items-center justify-center font-bold text-xs text-neon-green">
+                        <div className="w-8 h-8 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center font-bold text-xs text-[#AB978C]">
                           {tl.name.charAt(0)}
                         </div>
                         <span className="font-bold text-xs text-foreground">{tl.name}</span>
@@ -148,8 +186,8 @@ export default function TeamLeadersTable() {
                         variant={tl.role === 'admin' ? 'default' : 'secondary'}
                         className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
                           tl.role === 'admin'
-                            ? 'bg-neon-green/15 text-neon-green border border-neon-green/30'
-                            : 'bg-white/10 text-foreground border border-white/10'
+                            ? 'bg-[#AB978C]/15 text-[#AB978C] border border-[#AB978C]/30'
+                            : 'bg-[#6B7C98]/20 text-[#6B7C98] border border-[#6B7C98]/35'
                         }`}
                       >
                         {tl.role === 'admin' && <ShieldCheck className="w-3 h-3 mr-1 inline" />}
@@ -160,8 +198,8 @@ export default function TeamLeadersTable() {
                       {tl.clans && tl.clans.length > 0 ? (
                         <div className="flex gap-1.5 flex-wrap">
                           {tl.clans.map((c) => (
-                            <span key={c.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-neon-magenta/15 text-neon-magenta border border-neon-magenta/30">
-                              <Shield className="w-2.5 h-2.5" />
+                            <span key={c.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#1C2029] text-[#E9E6E7] border border-[#7B7F8A]/25">
+                              <Shield className="w-2.5 h-2.5 text-[#6B7C98]" />
                               {c.name}
                             </span>
                           ))}
@@ -186,7 +224,7 @@ export default function TeamLeadersTable() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="w-8 h-8 text-muted-foreground hover:text-neon-green hover:bg-neon-green/15 rounded-xl"
+                          className="w-8 h-8 text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl"
                           title="Editar Team Leader"
                           onClick={() => { setSelectedTL(tl); setFormOpen(true); }}
                         >
@@ -208,6 +246,40 @@ export default function TeamLeadersTable() {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-white/5 bg-white/[0.02]">
+              <span className="text-xs text-muted-foreground">
+                Mostrando <span className="font-semibold text-foreground">{(currentPage - 1) * pageSize + 1}</span> -{' '}
+                <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, totalItems)}</span> de{' '}
+                <span className="font-semibold text-[#AB978C]">{totalItems}</span> leaders
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="h-8 px-2.5 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Anterior
+                </Button>
+                <span className="text-xs font-medium px-2 text-[#E9E6E7]">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="h-8 px-2.5 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40"
+                >
+                  Siguiente <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -244,7 +316,7 @@ export default function TeamLeadersTable() {
               <select
                 value={selectedCoderId}
                 onChange={(e) => setSelectedCoderId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-neon-green focus:ring-1 focus:ring-neon-green/20"
+                className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30"
               >
                 <option value="" className="bg-card">Selecciona un Coder para promover...</option>
                 {coders.data?.map((coder) => (
@@ -261,7 +333,7 @@ export default function TeamLeadersTable() {
               <Button
                 onClick={handlePromote}
                 disabled={!selectedCoderId || promoteCoder.isPending}
-                className="h-9 bg-gradient-to-r from-neon-green to-emerald-600 hover:from-neon-green/90 text-background font-bold text-xs rounded-xl shadow-lg glow-green"
+                className="h-9 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze"
               >
                 {promoteCoder.isPending ? 'Promoviendo...' : 'Promover Coder'}
               </Button>

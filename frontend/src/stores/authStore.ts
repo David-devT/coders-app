@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     const { user, token } = await authApi.login(email, password);
     localStorage.setItem('token', token);
-    set({ user, token, isAuthenticated: true });
+    set({ user, token, isAuthenticated: true, isLoading: false });
   },
 
   // Register: crea una cuenta nueva con rol 'coder' por defecto,
@@ -36,14 +36,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (name, email, password) => {
     const { user, token } = await authApi.register(name, email, password, 'coder');
     localStorage.setItem('token', token);
-    set({ user, token, isAuthenticated: true });
+    set({ user, token, isAuthenticated: true, isLoading: false });
   },
 
   // Logout: elimina el token del localStorage y resetea todo
   // el estado de autenticación a valores por defecto.
   logout: () => {
     localStorage.removeItem('token');
-    set({ user: null, token: null, isAuthenticated: false });
+    set({ user: null, token: null, isAuthenticated: false, isLoading: false });
   },
 
   // Verificar sesión: se ejecuta al cargar la app (App.tsx).

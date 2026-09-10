@@ -1,5 +1,70 @@
-# Logs
-logs
+# ==========================================
+# 🔒 CODERS APP - GITIGNORE
+# ==========================================
+
+# ------------------------------------------
+# Environment Variables & Secrets (CRITICAL)
+# ------------------------------------------
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+*.env*
+
+# ------------------------------------------
+# Credentials, Keys & Passwords (CRITICAL)
+# ------------------------------------------
+credentials.txt
+*.credentials.txt
+cuentas.txt
+passwords.txt
+secrets.txt
+*.pem
+*.key
+*.cert
+*.pfx
+*.pkcs12
+
+# ------------------------------------------
+# Local Database Files & Cache
+# ------------------------------------------
+backend/src/data/
+*.sqlite
+*.sqlite3
+*.db
+*.sql.gz
+
+# ------------------------------------------
+# Dependencies & Package Managers
+# ------------------------------------------
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+.pnp
+.pnp.js
+
+# ------------------------------------------
+# Build Outputs & Cache
+# ------------------------------------------
+dist/
+dist-ssr/
+frontend/dist/
+*.local
+*.tsbuildinfo
+.cache/
+.vite/
+.turbo/
+
+# ------------------------------------------
+# Logs & Debugging
+# ------------------------------------------
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,36 +72,27 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# ------------------------------------------
+# IDE & Code Editors
+# ------------------------------------------
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
 
-# OS files
+# ------------------------------------------
+# Operating System Files
+# ------------------------------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-
-# Environment variables
-.env
-.env.*
-backend/.env
-frontend/.env
-
-# Data files
-backend/src/data/
-
-# Credentials & local secrets
-credentials.txt
-*.credentials.txt
-cuentas.txt
-
+[Dd]esktop.ini

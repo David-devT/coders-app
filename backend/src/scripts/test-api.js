@@ -1,6 +1,7 @@
 import http from 'http';
 import app from '../server.js';
 import { readJSON } from '../models/db.js';
+import { initDatabase } from '../config/initDatabase.js';
 
 let server;
 let port;
@@ -57,6 +58,7 @@ function assert(condition, message) {
 
 async function runTests() {
   console.log('🚀 Iniciando suite de pruebas automatizadas del backend...');
+  await initDatabase();
 
   // 1. Start server on dynamic port
   await new Promise((resolve) => {
@@ -111,13 +113,14 @@ async function runTests() {
     assert(badLogin.status === 401, 'Bad credentials return 401');
 
     // Register new Coder
+    const testEmail = `carlos.${Date.now()}@coders.app`;
     const regRes = await request('POST', '/api/auth/register', {
       name: 'Carlos Test',
-      email: 'carlos.test@coders.app',
+      email: testEmail,
       password: 'Password123!',
     });
     assert(regRes.status === 201, 'Register new coder returns 201');
-    assert(regRes.body.data.user.email === 'carlos.test@coders.app', 'Registered coder email matches');
+    assert(regRes.body.data.user.email === testEmail, 'Registered coder email matches');
     const newCoderToken = regRes.body.data.token;
     const newCoderId = regRes.body.data.user.id;
 

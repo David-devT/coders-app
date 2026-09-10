@@ -7,6 +7,9 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+
 import authRoutes from './routes/auth.routes.js';
 import codersRoutes from './routes/coders.routes.js';
 import clansRoutes from './routes/clans.routes.js';
@@ -18,9 +21,33 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Global Middlewares
-app.use(cors());
+// Security & HTTP Hardening Middlewares
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+
+const allowedOrigins = process.env.CLIENT_URL ? [process.env.CLIENT_URL, 'http://localhost:5173'] : '*';
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
+
 app.use(express.json());
+
+// Rate Limiter for Login endpoint
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+  message: {
+    ok: false,
+    message: 'Demasiados intentos de acceso desde esta IP. Por favor intenta en 15 minutos.',
+  },
+});
+app.use('/api/auth/login', loginLimiter);
 
 // API Routes
 app.use('/api/auth', authRoutes);

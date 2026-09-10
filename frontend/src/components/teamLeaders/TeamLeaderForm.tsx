@@ -87,7 +87,7 @@ export default function TeamLeaderForm({ open, onClose, onSubmit, teamLeader, is
             <Button
               type="submit"
               disabled={isLoading}
-              className="h-9 bg-gradient-to-r from-neon-green to-emerald-600 hover:from-neon-green/90 text-background font-bold text-xs rounded-xl shadow-lg glow-green"
+              className="h-9 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze"
             >
               {isLoading ? 'Guardando...' : 'Guardar'}
             </Button>

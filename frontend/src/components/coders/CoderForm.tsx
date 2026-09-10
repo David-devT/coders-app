@@ -87,7 +87,7 @@ export default function CoderForm({ open, onClose, onSubmit, coder, isLoading }:
             <Button
               type="submit"
               disabled={isLoading}
-              className="h-9 bg-gradient-to-r from-neon-cyan to-blue-600 hover:from-neon-cyan/90 text-background font-bold text-xs rounded-xl shadow-lg glow-cyan"
+              className="h-9 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze"
             >
               {isLoading ? 'Guardando...' : 'Guardar Perfil'}
             </Button>

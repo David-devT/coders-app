@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useTasks } from '../../hooks/useTasks';
 import { useCoders } from '../../hooks/useCoders';
 import { useClans } from '../../hooks/useClans';
@@ -8,15 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, ListTodo, Loader2, Trash2, RotateCcw, Clock, User, X } from 'lucide-react';
+import { Plus, ListTodo, Loader2, Trash2, RotateCcw, Clock, User, X, Shield, CheckCircle2 } from 'lucide-react';
 import type { TaskStatus } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
 
 const columns: { title: string; status: TaskStatus; colorClass: string }[] = [
-  { title: 'Pending', status: 'pending', colorClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  { title: 'In Review', status: 'review', colorClass: 'bg-neon-cyan/10 text-neon-cyan border-neon-cyan/20' },
-  { title: 'Approved', status: 'approved', colorClass: 'bg-neon-green/10 text-neon-green border-neon-green/20' },
-  { title: 'Rejected', status: 'rejected', colorClass: 'bg-destructive/10 text-destructive border-destructive/20' },
+  { title: 'Pending', status: 'pending', colorClass: 'bg-[#5E5653]/25 text-[#E9E6E7] border-[#7B7F8A]/30' },
+  { title: 'In Review', status: 'review', colorClass: 'bg-[#6B7C98]/20 text-[#6B7C98] border-[#6B7C98]/35' },
+  { title: 'Approved', status: 'approved', colorClass: 'bg-[#AB978C]/20 text-[#AB978C] border-[#AB978C]/35' },
+  { title: 'Rejected', status: 'rejected', colorClass: 'bg-[#E05252]/15 text-[#E05252] border-[#E05252]/30' },
 ];
 
 export default function TaskBoard() {
@@ -47,45 +48,158 @@ export default function TaskBoard() {
   };
 
   const handleStatusChange = (taskId: string, status: TaskStatus) => {
-    updateTaskStatus.mutate({ id: taskId, status });
+    updateTaskStatus.mutate(
+      { id: taskId, status },
+      {
+        onSuccess: () => {
+          toast.success(`Estado de task actualizado a ${status.toUpperCase()}`);
+        },
+        onError: (err: any) => {
+          toast.error(err?.response?.data?.message || 'Error al cambiar estado de la task');
+        },
+      }
+    );
+  };
+
+  const handleDropTask = (taskId: string, targetStatus: TaskStatus) => {
+    const task = tasks.data?.find((t) => t.id === taskId);
+    if (!task) return;
+    if (task.status === targetStatus) return;
+
+    // RBAC validation logic:
+    if (task.status === 'pending' && targetStatus === 'review') {
+      const isAssignee = !!user?.id && task.assignee?.id === user.id;
+      if (!isAssignee && !isAdmin) {
+        toast.error('Solo el Coder asignado o Admin pueden enviar la task a Review');
+        return;
+      }
+    } else if (task.status === 'review' && (targetStatus === 'approved' || targetStatus === 'rejected')) {
+      if (!isAdmin && !isTeamLeader) {
+        toast.error('Solo Team Leaders o Admin pueden Aprobar o Rechazar tareas');
+        return;
+      }
+    } else if (task.status === 'rejected' && targetStatus === 'pending') {
+      if (!isAdmin && !isTeamLeader) {
+        toast.error('Solo Team Leaders o Admin pueden reabrir tareas rechazadas');
+        return;
+      }
+    } else {
+      toast.error(`Transición no permitida: no puedes mover directo de "${task.status}" a "${targetStatus}"`);
+      return;
+    }
+
+    handleStatusChange(taskId, targetStatus);
   };
 
   const handleDelete = (taskId: string) => {
-    deleteTask.mutate(taskId);
+    deleteTask.mutate(taskId, {
+      onSuccess: () => toast.success('Task movida a eliminadas'),
+      onError: () => toast.error('Error al eliminar task'),
+    });
   };
 
   const handleRestore = (taskId: string) => {
-    restoreTask.mutate(taskId);
+    restoreTask.mutate(taskId, {
+      onSuccess: () => toast.success('Task restaurada exitosamente'),
+      onError: () => toast.error('Error al restaurar task'),
+    });
   };
 
   const handleCreateTask = () => {
     if (!newTask.title.trim()) return;
-    createTask.mutate({
-      title: newTask.title,
-      description: newTask.description,
-      priority: newTask.priority,
-      assigneeId: newTask.assigneeId || user?.id || '',
-      clanId: newTask.clanId || undefined,
-    });
-    setNewTask({ title: '', description: '', priority: 'medium', assigneeId: '', clanId: '' });
-    setIsDialogOpen(false);
+    createTask.mutate(
+      {
+        title: newTask.title,
+        description: newTask.description,
+        priority: newTask.priority,
+        assigneeId: newTask.assigneeId || user?.id || '',
+        clanId: newTask.clanId || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Nueva task creada con éxito');
+          setNewTask({ title: '', description: '', priority: 'medium', assigneeId: '', clanId: '' });
+          setIsDialogOpen(false);
+        },
+        onError: (err: any) => {
+          toast.error(err?.response?.data?.message || 'Error al crear task');
+        },
+      }
+    );
   };
 
   if (tasks.isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-neon-cyan" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#AB978C]" />
       </div>
     );
   }
 
+  // Calculate KPI stats
+  const totalTasks = tasks.data?.length || 0;
+  const approvedTasks = tasks.data?.filter((t) => t.status === 'approved').length || 0;
+  const pipelineTasks = tasks.data?.filter((t) => t.status === 'pending' || t.status === 'review').length || 0;
+  const approvalRate = totalTasks > 0 ? ((approvedTasks / totalTasks) * 100).toFixed(0) : '100';
+  const totalCoders = coders.data?.length || 0;
+  const totalClans = clans.data?.length || 0;
+
   return (
     <div className="space-y-6">
+      {/* KPI Metrics Summary Strip (StitchMCP Urban Slate Design) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs text-[#7B7F8A]">
+            <span className="font-semibold uppercase tracking-wider text-[10px]">Coders Activos</span>
+            <span className="w-2 h-2 rounded-full bg-[#AB978C] animate-pulse" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-extrabold text-foreground">{totalCoders}</span>
+            <span className="text-[11px] text-[#AB978C] font-semibold">en plataforma</span>
+          </div>
+        </div>
+
+        <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs text-[#7B7F8A]">
+            <span className="font-semibold uppercase tracking-wider text-[10px]">Clanes Activos</span>
+            <Shield className="w-3.5 h-3.5 text-[#6B7C98]" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-extrabold text-foreground">{totalClans}</span>
+            <span className="text-[11px] text-[#7B7F8A] font-semibold">unidades técnicas</span>
+          </div>
+        </div>
+
+        <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs text-[#7B7F8A]">
+            <span className="font-semibold uppercase tracking-wider text-[10px]">Tasks en Pipeline</span>
+            <Clock className="w-3.5 h-3.5 text-[#6B7C98]" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-extrabold text-[#6B7C98]">{pipelineTasks}</span>
+            <span className="text-[11px] text-[#7B7F8A] font-semibold">de {totalTasks} totales</span>
+          </div>
+        </div>
+
+        <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs text-[#AB978C]">
+            <span className="font-semibold uppercase tracking-wider text-[10px] text-[#AB978C]">Tasa Aprobación</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#AB978C]" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-extrabold text-[#AB978C] drop-shadow-[0_0_12px_rgba(171,151,140,0.35)]">
+              {approvalRate}%
+            </span>
+            <span className="text-[11px] text-[#E9E6E7] font-semibold">{approvedTasks} completadas</span>
+          </div>
+        </div>
+      </div>
+
       {/* Kanban Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-neon-magenta/15 border border-neon-magenta/30 flex items-center justify-center glow-magenta">
-            <ListTodo className="w-6 h-6 text-neon-magenta" />
+          <div className="w-12 h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze">
+            <ListTodo className="w-6 h-6 text-[#AB978C]" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold text-foreground tracking-tight">Kanban Task Board</h1>
@@ -113,7 +227,7 @@ export default function TaskBoard() {
             <>
               <Button
                 onClick={() => setIsDialogOpen(true)}
-                className="h-10 bg-gradient-to-r from-neon-magenta to-purple-600 hover:from-neon-magenta/90 hover:to-purple-600/90 text-background font-bold text-xs rounded-xl shadow-lg glow-magenta"
+                className="h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Nueva Task
@@ -166,7 +280,7 @@ export default function TaskBoard() {
                         id="assigneeSelect"
                         value={newTask.assigneeId}
                         onChange={(e) => setNewTask({ ...newTask, assigneeId: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-neon-magenta focus:ring-1 focus:ring-neon-magenta/20"
+                        className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30"
                       >
                         <option value="">Asignar a mí mismo ({user?.name || 'Usuario Actual'})</option>
                         {coders.data?.map((c) => (
@@ -182,7 +296,7 @@ export default function TaskBoard() {
                         id="clanSelect"
                         value={newTask.clanId}
                         onChange={(e) => setNewTask({ ...newTask, clanId: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-neon-magenta focus:ring-1 focus:ring-neon-magenta/20"
+                        className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30"
                       >
                         <option value="">Sin Clan asignado</option>
                         {clans.data?.map((clan) => (
@@ -194,7 +308,7 @@ export default function TaskBoard() {
                     </div>
                     <Button
                       onClick={handleCreateTask}
-                      className="w-full h-10 bg-gradient-to-r from-neon-magenta to-purple-600 hover:from-neon-magenta/90 text-background font-bold text-xs rounded-xl shadow-lg glow-magenta mt-2"
+                      className="w-full h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze mt-2"
                       disabled={!newTask.title.trim() || createTask.isPending}
                     >
                       {createTask.isPending ? (
@@ -240,11 +354,11 @@ export default function TaskBoard() {
                     <p className="text-xs font-bold text-foreground truncate">{task.title}</p>
                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-1">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-neon-cyan" />
+                        <Clock className="w-3 h-3 text-[#6B7C98]" />
                         {new Date(task.createdAt).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
                       </span>
                       <span className="flex items-center gap-1">
-                        <User className="w-3 h-3 text-neon-magenta" />
+                        <User className="w-3 h-3 text-[#AB978C]" />
                         {task.assignee?.name || 'Sin Asignar'}
                       </span>
                     </div>
@@ -252,7 +366,7 @@ export default function TaskBoard() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-8 h-8 text-neon-green hover:bg-neon-green/10 rounded-xl shrink-0"
+                    className="w-8 h-8 text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl shrink-0"
                     title="Restaurar task"
                     onClick={() => handleRestore(task.id)}
                     disabled={restoreTask.isPending}
@@ -277,6 +391,7 @@ export default function TaskBoard() {
             colorClass={col.colorClass}
             onStatusChange={handleStatusChange}
             onDelete={isAdmin ? handleDelete : undefined}
+            onDropTask={handleDropTask}
           />
         ))}
       </div>

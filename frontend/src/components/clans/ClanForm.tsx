@@ -95,7 +95,7 @@ export default function ClanForm({ open, onClose, onSubmit, clan, isLoading }: C
               id="leader"
               value={teamLeaderId}
               onChange={(e) => handleLeaderChange(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-neon-magenta focus:ring-1 focus:ring-neon-magenta/20"
+              className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30"
             >
               <option value="" className="bg-card">Sin líder asignado</option>
               {teamLeaders.data?.map((tl) => (
@@ -115,7 +115,7 @@ export default function ClanForm({ open, onClose, onSubmit, clan, isLoading }: C
             <Button
               type="submit"
               disabled={isLoading || !!error}
-              className="h-9 bg-gradient-to-r from-neon-magenta to-purple-600 hover:from-neon-magenta/90 text-background font-bold text-xs rounded-xl shadow-lg glow-magenta"
+              className="h-9 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze"
             >
               {isLoading ? 'Guardando...' : 'Guardar Clan'}
             </Button>
