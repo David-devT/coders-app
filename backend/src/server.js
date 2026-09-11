@@ -15,27 +15,31 @@ import codersRoutes from './routes/coders.routes.js';
 import clansRoutes from './routes/clans.routes.js';
 import teamLeadersRoutes from './routes/teamLeaders.routes.js';
 import tasksRoutes from './routes/tasks.routes.js';
+import notificationsRoutes from './routes/notifications.routes.js';
 
+// Resolución de rutas de directorio en módulos ES
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Security & HTTP Hardening Middlewares
+// Cabeceras HTTP de seguridad
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
 
+// Configuración de CORS para orígenes permitidos
 const allowedOrigins = process.env.CLIENT_URL ? [process.env.CLIENT_URL, 'http://localhost:5173'] : '*';
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
 
+// Parseo de cuerpo de solicitudes en formato JSON
 app.use(express.json());
 
-// Rate Limiter for Login endpoint
+// Limitador de intentos para prevenir ataques de fuerza bruta en login
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
@@ -49,25 +53,26 @@ const loginLimiter = rateLimit({
 });
 app.use('/api/auth/login', loginLimiter);
 
-// API Routes
+// Enrutamiento de los módulos de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/coders', codersRoutes);
 app.use('/api/clans', clansRoutes);
 app.use('/api/team-leaders', teamLeadersRoutes);
 app.use('/api/tasks', tasksRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
-// Static frontend build serving for production
+// Servidor de archivos estáticos del frontend compilado en producción
 const publicDir = path.resolve(__dirname, '../../frontend/dist');
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
 }
 
-// 404 handler for unhandled /api endpoints
+// Manejador 404 para rutas de la API no encontradas
 app.use('/api', (req, res) => {
   res.status(404).json({ ok: false, message: 'Endpoint not found' });
 });
 
-// SPA fallback for non-API routes in production
+// Redirección de rutas SPA hacia el index.html en producción
 app.use((req, res) => {
   const indexPath = path.join(publicDir, 'index.html');
   if (fs.existsSync(indexPath)) {
@@ -77,7 +82,7 @@ app.use((req, res) => {
   }
 });
 
-// Global Error Handler
+// Manejador global centralizado de errores del servidor
 app.use((err, req, res, next) => {
   console.error('Unhandled Error:', err.stack || err.message);
   res.status(err.status || 500).json({

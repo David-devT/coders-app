@@ -1,10 +1,13 @@
+/* Importaciones de dependencias y tipografía */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+/* Configuración de variante oscura */
 @custom-variant dark (&:is(.dark *));
 
+/* Tokens globales de diseño y paleta Urban Slate */
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;
@@ -39,7 +42,8 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
-    /* Urban Slate Palette */
+    
+    /* Escala de colores Urban Slate */
     --color-urban-white: #E9E6E7;
     --color-urban-charcoal: #5E5653;
     --color-urban-slate: #7B7F8A;
@@ -48,6 +52,8 @@
     --color-urban-obsidian: #0E1015;
     --color-urban-graphite: #14171E;
     --color-urban-elevated: #1C2029;
+    
+    /* Radios de borde */
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -57,8 +63,8 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Variables del tema principal */
 :root {
-    /* Urban Slate Precision Theme */
     --background: #0E1015;
     --foreground: #E9E6E7;
     --card: #14171E;
@@ -93,6 +99,7 @@
     --sidebar-ring: #AB978C;
 }
 
+/* Estilos base del documento, fondo general y selección de texto */
 @layer base {
     * {
         @apply border-border outline-ring/40;
@@ -111,7 +118,7 @@
 }
 
 @layer utilities {
-    /* Glassmorphism & Refined Slate Utilities (StitchMCP Urban Slate Precision) */
+    /* Paneles de navegación con fondo translúcido y desenfoque */
     .glass-panel {
         background: rgba(20, 23, 30, 0.85);
         backdrop-filter: blur(16px);
@@ -120,6 +127,8 @@
         border-top: 1px solid rgba(233, 230, 231, 0.12);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
+    
+    /* Tarjetas de datos y formularios con borde iluminado superior */
     .glass-card {
         background: rgba(28, 32, 41, 0.75);
         backdrop-filter: blur(16px);
@@ -128,6 +137,8 @@
         border-top: 1px solid rgba(233, 230, 231, 0.15);
         box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(233, 230, 231, 0.06);
     }
+    
+    /* Modales y ventanas flotantes con mayor elevación */
     .glass-elevated {
         background: linear-gradient(135deg, rgba(28, 32, 41, 0.9) 0%, rgba(20, 23, 30, 0.95) 100%);
         backdrop-filter: blur(20px);
@@ -136,6 +147,8 @@
         border-top: 1px solid rgba(171, 151, 140, 0.3);
         box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
     }
+    
+    /* Indicadores numéricos y métricas con animación al pasar el cursor */
     .kpi-card {
         background: rgba(20, 23, 30, 0.82);
         backdrop-filter: blur(16px);
@@ -149,6 +162,8 @@
         border-color: rgba(171, 151, 140, 0.4);
         box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(171, 151, 140, 0.12);
     }
+    
+    /* Campos de entrada de texto y estados de foco */
     .glass-input {
         background: #14171E;
         border: 1px solid rgba(123, 127, 138, 0.22);
@@ -160,52 +175,99 @@
         box-shadow: 0 0 0 1px #0E1015, 0 0 0 2px rgba(171, 151, 140, 0.4);
     }
 
-    /* Refined Luxury Glow Effects */
+    /* Resplandor suave en tono bronce cálido */
     .glow-bronze {
         box-shadow: 0 0 16px rgba(171, 151, 140, 0.25), 0 0 32px rgba(171, 151, 140, 0.1);
     }
+    
+    /* Resplandor suave en tono azul acero */
     .glow-slate {
         box-shadow: 0 0 16px rgba(107, 124, 152, 0.25), 0 0 32px rgba(107, 124, 152, 0.1);
     }
 
-    /* Compatibility aliases */
+    /* Clases de compatibilidad para estilos heredados */
     .glow-cyan { box-shadow: 0 0 16px rgba(107, 124, 152, 0.25); }
     .glow-seaweed { box-shadow: 0 0 16px rgba(123, 127, 138, 0.25); }
     .glow-champagne { box-shadow: 0 0 16px rgba(171, 151, 140, 0.25); }
+
+    /* Estructura para paneles y menús flotantes desplegables */
+    .dropdown-panel {
+        background: #14171E;
+        border: 1px solid rgba(123, 127, 138, 0.22);
+        border-top: 1px solid rgba(171, 151, 140, 0.35);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), 0 0 20px rgba(171, 151, 140, 0.08);
+        border-radius: 1rem;
+    }
+
+    /* Elementos individuales dentro de menús desplegables */
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.75rem;
+        color: #E9E6E7;
+        transition: all 0.15s ease-in-out;
+        cursor: pointer;
+    }
+    .dropdown-item:hover {
+        background: rgba(171, 151, 140, 0.14);
+        color: #FFFFFF;
+    }
 }
 
-/* Custom Scrollbars */
+/* Personalización elegante de selects nativos con icono vectorizado en bronce */
+select.glass-input, select.glass-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23AB978C' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2.25rem;
+    cursor: pointer;
+}
+
+select option {
+    background-color: #14171E !important;
+    color: #E9E6E7 !important;
+    padding: 10px 12px;
+}
+
+
+/* Barras de desplazamiento personalizadas */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: rgba(10, 14, 23, 0.5);
+    background: rgba(14, 16, 21, 0.7);
 }
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(123, 127, 138, 0.3);
     border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--neon-cyan);
+    background: #AB978C;
 }
 
-/* Keyframes */
+/* Animación de vibración para errores de autenticación o validación */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
     10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
     20%, 40%, 60%, 80% { transform: translateX(4px); }
 }
-
 .animate-shake {
     animation: shake 0.5s ease-in-out;
 }
 
+/* Animación de entrada suave con escala y opacidad */
 @keyframes fadeInScale {
     from { opacity: 0; transform: scale(0.96) translateY(-4px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
 }
-
 .animate-fade-in-scale {
     animation: fadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

@@ -1,5 +1,6 @@
 import * as teamLeadersService from '../services/teamLeaders.service.js';
 
+// Retorna todos los líderes de equipo registrados
 export const getAll = async (req, res) => {
   try {
     const teamLeaders = await teamLeadersService.getAll();
@@ -9,6 +10,7 @@ export const getAll = async (req, res) => {
   }
 };
 
+// Retorna un líder de equipo por ID
 export const getById = async (req, res) => {
   try {
     const tl = await teamLeadersService.getById(req.params.id);
@@ -21,6 +23,7 @@ export const getById = async (req, res) => {
   }
 };
 
+// Crea un nuevo líder de equipo con credenciales cifradas
 export const create = async (req, res) => {
   try {
     const tl = await teamLeadersService.create(req.body);
@@ -30,6 +33,7 @@ export const create = async (req, res) => {
   }
 };
 
+// Actualiza la información o rol de un líder de equipo
 export const update = async (req, res) => {
   try {
     const tl = await teamLeadersService.update(req.params.id, req.body);
@@ -40,6 +44,7 @@ export const update = async (req, res) => {
   }
 };
 
+// Elimina un líder de equipo y desvincula sus clanes dirigidos
 export const remove = async (req, res) => {
   try {
     await teamLeadersService.remove(req.params.id);
@@ -50,6 +55,7 @@ export const remove = async (req, res) => {
   }
 };
 
+// Promueve a un Coder existente al rol de Team Leader
 export const promote = async (req, res) => {
   try {
     const { coderId } = req.body;
@@ -60,6 +66,7 @@ export const promote = async (req, res) => {
   }
 };
 
+// Degrada a un Team Leader al rol de Coder regular
 export const demote = async (req, res) => {
   try {
     const { tlId } = req.body;

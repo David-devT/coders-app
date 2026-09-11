@@ -221,11 +221,13 @@ async function runTests() {
         priority: 'high',
         assigneeId: coderId,
         clanId: clan2Id,
+        dueDate: '2026-10-15',
       },
       tlToken
     );
     assert(taskRes.status === 201, 'TL can create task');
     assert(taskRes.body.data.status === 'pending', 'New task status is pending');
+    assert(taskRes.body.data.dueDate === '2026-10-15', 'New task has correct dueDate');
     const taskId = taskRes.body.data.id;
 
     // Transition: pending -> review by assignee (Elena)
@@ -269,10 +271,11 @@ async function runTests() {
     const toApproved = await request(
       'PATCH',
       `/api/tasks/${taskId}/status`,
-      { status: 'approved' },
+      { status: 'approved', feedback: 'Aprobado con éxito' },
       tlToken
     );
     assert(toApproved.status === 200 && toApproved.body.data.status === 'approved', 'TL approves task');
+    assert(toApproved.body.data.feedback === 'Aprobado con éxito', 'Approved task has feedback saved');
 
     // Approved is final state -> cannot change
     const afterApproved = await request(
@@ -296,9 +299,61 @@ async function runTests() {
     const restoreRes = await request('POST', `/api/tasks/${taskId}/restore`, null, adminToken);
     assert(restoreRes.status === 200 && restoreRes.body.data.id === taskId, 'Admin can restore task');
 
-    // Cleanup created test clan
+    // --- 6. Testing Validations, Task History & Notifications ---
+    console.log('\n--- 6. Testing Validations, Task History & Notifications ---');
+
+    // Valida que el historial de la tarea contenga registros de las transiciones
+    const restoredTask = await request('GET', `/api/tasks/${taskId}`, null, adminToken);
+    assert(
+      Array.isArray(restoredTask.body.data.history) && restoredTask.body.data.history.length >= 1,
+      'Task contains audit history entries'
+    );
+
+    // Valida rechazo de creación de task sin título (middleware de validación)
+    const badTask = await request('POST', '/api/tasks', { title: '   ', priority: 'high' }, adminToken);
+    assert(badTask.status === 400, 'Empty task title rejected by validation middleware (400)');
+
+    // Crea tarea con enlace a GitHub
+    const ghTask = await request(
+      'POST',
+      '/api/tasks',
+      {
+        title: 'Integrar Webhooks de GitHub',
+        priority: 'high',
+        githubUrl: 'https://github.com/David-devT/coders-app/pull/1',
+      },
+      adminToken
+    );
+    assert(ghTask.status === 201 && ghTask.body.data.githubUrl?.includes('github.com'), 'Task saves githubUrl');
+
+    // Consulta de notificaciones del usuario autenticado
+    const notifs = await request('GET', '/api/notifications', null, coderToken);
+    assert(notifs.status === 200 && Array.isArray(notifs.body.data.notifications), 'Coder can list notifications');
+
+    // Marcar todas las notificaciones como leídas
+    const readAllNotifs = await request('PATCH', '/api/notifications/read-all', null, coderToken);
+    assert(readAllNotifs.status === 200, 'Can mark all notifications as read');
+
+    // Borrado de una notificación individual si existe alguna
+    if (notifs.body.data.notifications.length > 0) {
+      const targetNotifId = notifs.body.data.notifications[0].id;
+      const deleteSingle = await request('DELETE', `/api/notifications/${targetNotifId}`, null, coderToken);
+      assert(deleteSingle.status === 200, 'Can delete single notification');
+    }
+
+    // Borrado masivo de todas las notificaciones del usuario
+    const clearAll = await request('DELETE', '/api/notifications/clear-all', null, coderToken);
+    assert(clearAll.status === 200, 'Can clear all user notifications');
+
+    // Verificar que la lista de notificaciones ahora esté vacía
+    const emptyNotifs = await request('GET', '/api/notifications', null, coderToken);
+    assert(emptyNotifs.body.data.notifications.length === 0, 'Notifications list is empty after clear all');
+
+    // Cleanup created test clan and extra task
+    await request('DELETE', `/api/tasks/${ghTask.body.data.id}`, null, adminToken);
     await request('DELETE', `/api/clans/${clan2Id}`, null, adminToken);
     await request('DELETE', `/api/coders/${testCoderId}`, null, adminToken);
+
 
     console.log('\n🎉 ALL TESTS PASSED SUCCESSFULLY! 100% Functional.');
   } finally {

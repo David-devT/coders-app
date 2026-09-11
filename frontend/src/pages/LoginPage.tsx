@@ -16,6 +16,7 @@ interface ErrorInfo {
   colorClass: string;
 }
 
+// Clasifica errores de red o autenticación devolviendo mensajes y estilos visuales
 function classifyError(err: unknown): ErrorInfo {
   const axiosErr = err as {
     response?: { status?: number; data?: { message?: string } };
@@ -27,6 +28,7 @@ function classifyError(err: unknown): ErrorInfo {
   const code = axiosErr.code;
   const serverMessage = axiosErr.response?.data?.message;
 
+  // Credenciales inválidas o token expirado
   if (status === 401 || status === 403) {
     return {
       message: 'Correo electrónico o contraseña incorrectos',
@@ -36,6 +38,7 @@ function classifyError(err: unknown): ErrorInfo {
     };
   }
 
+  // Fallo de conectividad con el servidor backend
   if (code === 'ERR_NETWORK' || code === 'ECONNREFUSED' || !axiosErr.response) {
     return {
       message: 'No se pudo conectar con el servidor',
@@ -45,6 +48,7 @@ function classifyError(err: unknown): ErrorInfo {
     };
   }
 
+  // Expiración por tiempo de espera
   if (code === 'ECONNABORTED' || axiosErr.message?.includes('timeout')) {
     return {
       message: 'El servidor tardó demasiado en responder',
@@ -62,6 +66,7 @@ function classifyError(err: unknown): ErrorInfo {
   };
 }
 
+// Vista de autenticación con inicio de sesión y registro de perfiles
 export default function LoginPage() {
   const [mode, setMode] = useState<'register' | 'login'>('login');
   const [name, setName] = useState('');
@@ -74,6 +79,7 @@ export default function LoginPage() {
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
 
+  // Oculta automáticamente los mensajes de error luego de 5 segundos
   useEffect(() => {
     if (errorInfo) {
       const timer = setTimeout(() => setErrorInfo(null), 5000);
@@ -81,6 +87,7 @@ export default function LoginPage() {
     }
   }, [errorInfo]);
 
+  // Alterna entre los formularios de inicio de sesión y registro
   const toggleMode = () => {
     setMode((prev) => (prev === 'register' ? 'login' : 'register'));
     setErrorInfo(null);
@@ -89,8 +96,10 @@ export default function LoginPage() {
     setPassword('');
   };
 
+  // Valida el formato estándar de correo electrónico
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
+  // Procesa el envío del formulario realizando validación y petición al store
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorInfo(null);
@@ -130,13 +139,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
-      {/* Background Glow Orbs */}
+      {/* Resplandor ambiental de fondo */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#AB978C]/10 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#6B7C98]/10 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative z-10">
         
-        {/* Left Side: Brand Promo / Platform Capabilities */}
+        {/* Panel informativo lateral con capacidades de la plataforma */}
         <div className="md:col-span-5 space-y-6 hidden md:block">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel border border-[#AB978C]/30 text-[#AB978C] text-xs font-semibold tracking-wide">
             <Sparkles className="w-3.5 h-3.5" />
@@ -151,7 +160,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Platform Feature Cards */}
+          {/* Tarjetas resumen de módulos funcionales */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center gap-3 p-3 rounded-xl glass-panel border-white/5">
               <div className="w-8 h-8 rounded-lg bg-[#6B7C98]/20 border border-[#6B7C98]/30 flex items-center justify-center text-[#6B7C98] shrink-0">
@@ -185,7 +194,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side: Auth Glass Card */}
+        {/* Tarjeta translúcida con formulario de autenticación */}
         <div className="md:col-span-7">
           <div className={`glass-card p-8 rounded-2xl relative ${shake ? 'animate-shake' : 'animate-fade-in-scale'}`}>
             <div className="flex items-center gap-3 mb-6">
@@ -193,13 +202,14 @@ export default function LoginPage() {
                 <Zap className="w-6 h-6 text-[#AB978C] animate-pulse-soft" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground tracking-tight">Coders App</h2>
+                <h2 className="text-2xl font-bold text-foreground tracking-tight font-mono">coders<span className="text-[#AB978C]">-app</span></h2>
                 <p className="text-xs text-muted-foreground">
                   {isRegister ? 'Registra tu perfil de Coder' : 'Inicia sesión para acceder a tu Dashboard'}
                 </p>
               </div>
             </div>
 
+            {/* Formulario de captura de credenciales */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {errorInfo && (
                 <div className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-xs animate-in fade-in slide-in-from-top-2 ${errorInfo.colorClass}`}>
@@ -265,6 +275,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
+            {/* Enlace para alternar entre login y registro */}
             <div className="mt-6 text-center text-xs text-muted-foreground border-t border-white/5 pt-4">
               {isRegister ? (
                 <>

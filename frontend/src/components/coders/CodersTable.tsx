@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useCoders } from '../../hooks/useCoders';
+import { useClans } from '../../hooks/useClans';
 import { useAuthStore } from '../../stores/authStore';
 import CoderForm from './CoderForm';
 import DeleteCoderDialog from './DeleteCoderDialog';
@@ -10,36 +11,44 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Search, Pencil, Trash2, Code2, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Coder } from '../../types';
 
+// Tabla de administración y listado paginado de programadores (Coders)
 export default function CodersTable() {
   const user = useAuthStore((s) => s.user);
   const isCoder = 'role' in (user || {}) && (user as { role: string }).role === 'coder';
 
   const { coders, createCoder, updateCoder, deleteCoder } = useCoders();
+  const { clans } = useClans();
 
   const [search, setSearch] = useState('');
+  const [selectedClan, setSelectedClan] = useState('all');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedCoder, setSelectedCoder] = useState<Coder | null>(null);
 
-  // Pagination state
+  // Control de paginación
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // Reinicia a la primera página ante cualquier cambio en el término de búsqueda o filtro de clan
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, selectedClan]);
 
-  const filtered = coders.data?.filter(
-    (c) =>
+  // Filtrado de coders por nombre, correo electrónico y selección de clan
+  const filtered = coders.data?.filter((c) => {
+    const matchesSearch =
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
-      c.clan?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+      c.clan?.name?.toLowerCase().includes(search.toLowerCase());
+    const matchesClan = selectedClan === 'all' || c.clan?.id === selectedClan;
+    return matchesSearch && matchesClan;
+  });
 
   const totalItems = filtered?.length || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const paginatedItems = filtered?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // Registra un nuevo Coder en el sistema
   const handleCreate = async (data: Record<string, string>) => {
     try {
       await createCoder.mutateAsync(data as { name: string; email: string; password: string });
@@ -50,6 +59,7 @@ export default function CodersTable() {
     }
   };
 
+  // Modifica los datos de un Coder existente
   const handleUpdate = async (data: Record<string, string>) => {
     if (selectedCoder) {
       try {
@@ -63,6 +73,7 @@ export default function CodersTable() {
     }
   };
 
+  // Elimina al Coder seleccionado
   const handleDelete = async () => {
     if (selectedCoder) {
       try {
@@ -78,7 +89,7 @@ export default function CodersTable() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado con título del directorio y botón de alta */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze">
@@ -90,6 +101,7 @@ export default function CodersTable() {
           </div>
         </div>
 
+        {/* Solo visible para roles con permisos de escritura (Team Leader o Admin) */}
         {!isCoder && (
           <Button
             onClick={() => setFormOpen(true)}
@@ -100,18 +112,33 @@ export default function CodersTable() {
         )}
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nombre, correo o Clan..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="glass-input h-11 pl-10 rounded-xl text-xs"
-        />
+      {/* Barra de búsqueda predictiva y filtro por Clan */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nombre, correo o Clan..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="glass-input h-11 pl-10 rounded-xl text-xs"
+          />
+        </div>
+        {/* Selector de filtro por Clan asignado */}
+        <select
+          value={selectedClan}
+          onChange={(e) => setSelectedClan(e.target.value)}
+          className="h-11 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30 bg-[#14171E] sm:w-56"
+        >
+          <option value="all">Todos los Clanes</option>
+          {clans.data?.map((clan) => (
+            <option key={clan.id} value={clan.id} className="bg-[#14171E] text-foreground">
+              {clan.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Table Container */}
+      {/* Tabla con estado de carga y registros paginados */}
       {coders.isLoading ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 border-2 border-[#AB978C]/30 border-t-[#AB978C] rounded-full animate-spin glow-bronze" />
@@ -188,7 +215,7 @@ export default function CodersTable() {
             </TableBody>
           </Table>
 
-          {/* Pagination Controls */}
+          {/* Barra de navegación de páginas */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-white/5 bg-white/[0.02]">
               <span className="text-xs text-muted-foreground">
@@ -224,7 +251,7 @@ export default function CodersTable() {
         </div>
       )}
 
-      {/* Form Dialog */}
+      {/* Diálogo modal de formulario para crear o editar Coder */}
       <CoderForm
         open={formOpen}
         onClose={() => { setFormOpen(false); setSelectedCoder(null); }}
@@ -233,7 +260,7 @@ export default function CodersTable() {
         isLoading={createCoder.isPending || updateCoder.isPending}
       />
 
-      {/* Delete Dialog */}
+      {/* Diálogo modal de confirmación de eliminación */}
       <DeleteCoderDialog
         open={deleteOpen}
         onClose={() => { setDeleteOpen(false); setSelectedCoder(null); }}

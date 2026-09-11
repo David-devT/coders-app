@@ -1,5 +1,6 @@
 import * as codersService from '../services/coders.service.js';
 
+// Retorna la lista de todos los programadores
 export const getAll = async (req, res) => {
   try {
     const coders = await codersService.getAll();
@@ -9,6 +10,7 @@ export const getAll = async (req, res) => {
   }
 };
 
+// Retorna un programador específico por ID
 export const getById = async (req, res) => {
   try {
     const coder = await codersService.getById(req.params.id);
@@ -21,6 +23,7 @@ export const getById = async (req, res) => {
   }
 };
 
+// Registra un nuevo programador con validaciones de email y asignación de clan
 export const create = async (req, res) => {
   try {
     const coder = await codersService.create(req.body);
@@ -30,6 +33,7 @@ export const create = async (req, res) => {
   }
 };
 
+// Actualiza los datos o membresía de clan de un programador
 export const update = async (req, res) => {
   try {
     const coder = await codersService.update(req.params.id, req.body);
@@ -40,6 +44,7 @@ export const update = async (req, res) => {
   }
 };
 
+// Elimina a un programador y desvincula sus referencias en el clan
 export const remove = async (req, res) => {
   try {
     await codersService.remove(req.params.id);

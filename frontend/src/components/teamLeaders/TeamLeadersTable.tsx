@@ -12,6 +12,7 @@ import DeleteTeamLeaderDialog from './DeleteTeamLeaderDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import type { TeamLeader } from '../../types';
 
+// Tabla administrativa exclusiva para la gestión de líderes de equipo, promociones y degradaciones
 export default function TeamLeadersTable() {
   const { teamLeaders, createTeamLeader, updateTeamLeader, deleteTeamLeader, promoteCoder, demoteTL } = useTeamLeaders();
   const { coders } = useCoders();
@@ -23,14 +24,16 @@ export default function TeamLeadersTable() {
   const [selectedCoderId, setSelectedCoderId] = useState('');
   const [search, setSearch] = useState('');
 
-  // Pagination state
+  // Control de paginación
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // Reinicia paginación si se busca
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
+  // Filtra líderes por nombre, correo o rol
   const filtered = teamLeaders.data?.filter(
     (t) =>
       t.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -42,6 +45,7 @@ export default function TeamLeadersTable() {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const paginatedItems = filtered?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // Registra un nuevo Team Leader
   const handleCreate = async (data: Record<string, string>) => {
     try {
       await createTeamLeader.mutateAsync(data as { name: string; email: string; password: string });
@@ -52,6 +56,7 @@ export default function TeamLeadersTable() {
     }
   };
 
+  // Actualiza los datos de un líder existente
   const handleUpdate = async (data: Record<string, string>) => {
     if (selectedTL) {
       try {
@@ -65,11 +70,12 @@ export default function TeamLeadersTable() {
     }
   };
 
+  // Elimina un Team Leader
   const handleDelete = async () => {
     if (selectedTL) {
       try {
         await deleteTeamLeader.mutateAsync(selectedTL.id);
-        toast.success('¡Team Leader eliminado correctamente!');
+        toast.success('Team Leader eliminado exitosamente');
         setDeleteOpen(false);
         setSelectedTL(null);
       } catch (err: any) {
@@ -78,11 +84,15 @@ export default function TeamLeadersTable() {
     }
   };
 
+  // Promociona a un Coder existente al rol de Team Leader
   const handlePromote = async () => {
-    if (!selectedCoderId) return;
+    if (!selectedCoderId) {
+      toast.error('Selecciona un coder para promover');
+      return;
+    }
     try {
       await promoteCoder.mutateAsync(selectedCoderId);
-      toast.success('¡Coder promovido a Team Leader con éxito!');
+      toast.success('¡Coder promovido a Team Leader exitosamente!');
       setPromoteOpen(false);
       setSelectedCoderId('');
     } catch (err: any) {
@@ -90,11 +100,12 @@ export default function TeamLeadersTable() {
     }
   };
 
+  // Degrada a un Team Leader al rol de Coder
   const handleDemote = async () => {
     if (!selectedTL) return;
     try {
       await demoteTL.mutateAsync(selectedTL.id);
-      toast.success('¡Team Leader degradado a Coder correctamente!');
+      toast.success('¡Team Leader degradado a Coder exitosamente!');
       setDemoteOpen(false);
       setSelectedTL(null);
     } catch (err: any) {
@@ -104,7 +115,7 @@ export default function TeamLeadersTable() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado con título y acciones de creación y promoción */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze">
@@ -112,27 +123,31 @@ export default function TeamLeadersTable() {
           </div>
           <div>
             <h1 className="text-xl font-extrabold text-foreground tracking-tight">Directorio de Team Leaders</h1>
-            <p className="text-xs text-muted-foreground">Gestiona líderes, promueve Coders y supervisa la asignación de Clans</p>
+            <p className="text-xs text-muted-foreground">Líderes técnicos, roles jerárquicos y asignación de clanes</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
+          {/* Modal de ascenso de Coder */}
           <Button
+            variant="outline"
             onClick={() => setPromoteOpen(true)}
-            className="h-10 glass-panel border border-[#6B7C98]/40 text-[#6B7C98] hover:bg-[#6B7C98]/15 font-bold text-xs rounded-xl"
+            className="h-10 border-[#6B7C98]/40 text-[#6B7C98] hover:bg-[#6B7C98]/15 rounded-xl font-bold text-xs"
           >
-            <ArrowUp className="w-4 h-4 mr-2" /> Promover Coder
+            <ArrowUp className="w-4 h-4 mr-1.5" /> Promover Coder
           </Button>
+
+          {/* Modal de creación directa */}
           <Button
             onClick={() => setFormOpen(true)}
             className="h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all"
           >
-            <Plus className="w-4 h-4 mr-2" /> Agregar Team Leader
+            <Plus className="w-4 h-4 mr-1.5" /> Agregar Leader
           </Button>
         </div>
       </div>
 
-      {/* Search Bar */}
+      {/* Barra de búsqueda */}
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -143,7 +158,7 @@ export default function TeamLeadersTable() {
         />
       </div>
 
-      {/* Table Container */}
+      {/* Tabla de líderes de equipo */}
       {teamLeaders.isLoading ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 border-2 border-[#AB978C]/30 border-t-[#AB978C] rounded-full animate-spin glow-bronze" />
@@ -154,10 +169,10 @@ export default function TeamLeadersTable() {
             <TableHeader className="bg-white/5">
               <TableRow className="hover:bg-transparent border-white/5">
                 <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Perfil del Leader</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Líder de Equipo</TableHead>
                 <TableHead className="text-xs font-bold text-muted-foreground">Correo</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Rol de Acceso</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Clans Liderados</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Rol</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground">Clans a Cargo</TableHead>
                 <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -174,7 +189,7 @@ export default function TeamLeadersTable() {
                     <TableCell className="text-xs font-medium text-muted-foreground">{(currentPage - 1) * pageSize + i + 1}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center font-bold text-xs text-[#AB978C]">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#AB978C] to-[#6B7C98] flex items-center justify-center font-bold text-xs text-[#0E1015]">
                           {tl.name.charAt(0)}
                         </div>
                         <span className="font-bold text-xs text-foreground">{tl.name}</span>
@@ -183,29 +198,31 @@ export default function TeamLeadersTable() {
                     <TableCell className="text-xs text-muted-foreground">{tl.email}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={tl.role === 'admin' ? 'default' : 'secondary'}
-                        className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
+                        variant="outline"
+                        className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full uppercase ${
                           tl.role === 'admin'
-                            ? 'bg-[#AB978C]/15 text-[#AB978C] border border-[#AB978C]/30'
-                            : 'bg-[#6B7C98]/20 text-[#6B7C98] border border-[#6B7C98]/35'
+                            ? 'bg-[#AB978C]/15 text-[#AB978C] border-[#AB978C]/40'
+                            : 'bg-[#6B7C98]/15 text-[#6B7C98] border-[#6B7C98]/40'
                         }`}
                       >
-                        {tl.role === 'admin' && <ShieldCheck className="w-3 h-3 mr-1 inline" />}
-                        {tl.role}
+                        {tl.role === 'admin' ? (
+                          <><ShieldCheck className="w-3 h-3 mr-1 inline" /> Admin</>
+                        ) : (
+                          <><Shield className="w-3 h-3 mr-1 inline" /> Team Leader</>
+                        )}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {tl.clans && tl.clans.length > 0 ? (
-                        <div className="flex gap-1.5 flex-wrap">
+                        <div className="flex flex-wrap gap-1">
                           {tl.clans.map((c) => (
-                            <span key={c.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#1C2029] text-[#E9E6E7] border border-[#7B7F8A]/25">
-                              <Shield className="w-2.5 h-2.5 text-[#6B7C98]" />
+                            <span key={c.id} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#6B7C98]/15 text-[#6B7C98] border border-[#6B7C98]/30">
                               {c.name}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground/60 italic">Sin Clans asignados</span>
+                        <span className="text-xs text-muted-foreground/60 italic">Sin Clans</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -214,9 +231,9 @@ export default function TeamLeadersTable() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="w-8 h-8 text-muted-foreground hover:text-amber-400 hover:bg-amber-500/15 rounded-xl"
-                            title="Degradar a Coder"
+                            className="w-8 h-8 text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 rounded-xl"
                             onClick={() => { setSelectedTL(tl); setDemoteOpen(true); }}
+                            title="Degradar a Coder"
                           >
                             <ArrowDown className="w-3.5 h-3.5" />
                           </Button>
@@ -225,20 +242,22 @@ export default function TeamLeadersTable() {
                           variant="ghost"
                           size="icon"
                           className="w-8 h-8 text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl"
-                          title="Editar Team Leader"
                           onClick={() => { setSelectedTL(tl); setFormOpen(true); }}
+                          title="Editar Leader"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl"
-                          title="Eliminar Team Leader"
-                          onClick={() => { setSelectedTL(tl); setDeleteOpen(true); }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {tl.role !== 'admin' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl"
+                            onClick={() => { setSelectedTL(tl); setDeleteOpen(true); }}
+                            title="Eliminar Leader"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -247,13 +266,13 @@ export default function TeamLeadersTable() {
             </TableBody>
           </Table>
 
-          {/* Pagination Controls */}
+          {/* Paginación */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-white/5 bg-white/[0.02]">
               <span className="text-xs text-muted-foreground">
                 Mostrando <span className="font-semibold text-foreground">{(currentPage - 1) * pageSize + 1}</span> -{' '}
                 <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, totalItems)}</span> de{' '}
-                <span className="font-semibold text-[#AB978C]">{totalItems}</span> leaders
+                <span className="font-semibold text-[#AB978C]">{totalItems}</span> líderes
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -283,7 +302,7 @@ export default function TeamLeadersTable() {
         </div>
       )}
 
-      {/* Form Modal */}
+      {/* Modal de formulario para Team Leader */}
       <TeamLeaderForm
         open={formOpen}
         onClose={() => { setFormOpen(false); setSelectedTL(null); }}
@@ -292,7 +311,7 @@ export default function TeamLeadersTable() {
         isLoading={createTeamLeader.isPending || updateTeamLeader.isPending}
       />
 
-      {/* Delete Dialog */}
+      {/* Modal de confirmación de eliminación */}
       <DeleteTeamLeaderDialog
         open={deleteOpen}
         onClose={() => { setDeleteOpen(false); setSelectedTL(null); }}
@@ -301,62 +320,62 @@ export default function TeamLeadersTable() {
         isLoading={deleteTeamLeader.isPending}
       />
 
-      {/* Promote Coder Modal */}
+      {/* Diálogo modal para promover Coder a Team Leader */}
       <Dialog open={promoteOpen} onOpenChange={setPromoteOpen}>
         <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground">Promover Coder a Team Leader</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              El Coder seleccionado obtendrá privilegios de Team Leader y saldrá de la lista de Coders.
+              Selecciona un coder para otorgarle permisos de líder de equipo.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 mt-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">Seleccionar Coder</label>
-              <select
-                value={selectedCoderId}
-                onChange={(e) => setSelectedCoderId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30"
-              >
-                <option value="" className="bg-card">Selecciona un Coder para promover...</option>
-                {coders.data?.map((coder) => (
-                  <option key={coder.id} value={coder.id} className="bg-card text-foreground">
-                    {coder.name} ({coder.email})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex justify-end gap-2 pt-3 border-t border-white/5">
-              <Button variant="outline" onClick={() => { setPromoteOpen(false); setSelectedCoderId(''); }} className="h-9 glass-panel border-white/10 text-xs font-semibold">
-                Cancelar
-              </Button>
-              <Button
-                onClick={handlePromote}
-                disabled={!selectedCoderId || promoteCoder.isPending}
-                className="h-9 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze"
-              >
-                {promoteCoder.isPending ? 'Promoviendo...' : 'Promover Coder'}
-              </Button>
-            </div>
+          <div className="space-y-4 mt-4">
+            <select
+              value={selectedCoderId}
+              onChange={(e) => setSelectedCoderId(e.target.value)}
+              className="w-full h-11 px-3.5 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30"
+            >
+              <option value="">Selecciona un coder...</option>
+              {coders.data?.map((c) => (
+                <option key={c.id} value={c.id} className="bg-card text-foreground">
+                  {c.name} ({c.email})
+                </option>
+              ))}
+            </select>
+            <Button
+              onClick={handlePromote}
+              disabled={!selectedCoderId || promoteCoder.isPending}
+              className="w-full h-11 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze"
+            >
+              Confirmar Promoción
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Demote Modal */}
+      {/* Diálogo modal para degradar Team Leader a Coder */}
       <Dialog open={demoteOpen} onOpenChange={setDemoteOpen}>
         <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground">Degradar Team Leader</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              ¿Estás seguro de que deseas degradar a <strong className="text-foreground">{selectedTL?.name}</strong> al rol de Coder?
+              ¿Estás seguro de que deseas degradar a <strong>{selectedTL?.name}</strong> al rol de Coder? Perderá los permisos de administración y gestión de clanes.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2 pt-3 border-t border-white/5">
-            <Button variant="outline" onClick={() => { setDemoteOpen(false); setSelectedTL(null); }} className="h-9 glass-panel border-white/10 text-xs font-semibold">
+          <div className="flex gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setDemoteOpen(false)}
+              className="flex-1 h-10 border-white/10 glass-panel text-xs"
+            >
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleDemote} disabled={demoteTL.isPending} className="h-9 font-bold text-xs rounded-xl">
-              {demoteTL.isPending ? 'Degradando...' : 'Confirmar Degradación'}
+            <Button
+              onClick={handleDemote}
+              disabled={demoteTL.isPending}
+              className="flex-1 h-10 bg-destructive hover:bg-destructive/90 text-white font-bold text-xs rounded-xl"
+            >
+              Confirmar Degradación
             </Button>
           </div>
         </DialogContent>

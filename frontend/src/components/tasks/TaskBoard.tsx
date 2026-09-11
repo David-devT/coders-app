@@ -4,15 +4,17 @@ import { useTasks } from '../../hooks/useTasks';
 import { useCoders } from '../../hooks/useCoders';
 import { useClans } from '../../hooks/useClans';
 import TaskColumn from './TaskColumn';
+import TaskDetailModal from './TaskDetailModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, ListTodo, Loader2, Trash2, RotateCcw, Clock, User, X, Shield, CheckCircle2 } from 'lucide-react';
-import type { TaskStatus } from '../../types';
+import { Plus, ListTodo, Loader2, Trash2, RotateCcw, Clock, User, X, Shield, CheckCircle2, Search, Calendar, Download, GitPullRequest } from 'lucide-react';
+import type { Task, TaskStatus } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
 
+// Definición de las 4 columnas de flujo de estados del tablero Kanban
 const columns: { title: string; status: TaskStatus; colorClass: string }[] = [
   { title: 'Pending', status: 'pending', colorClass: 'bg-[#5E5653]/25 text-[#E9E6E7] border-[#7B7F8A]/30' },
   { title: 'In Review', status: 'review', colorClass: 'bg-[#6B7C98]/20 text-[#6B7C98] border-[#6B7C98]/35' },
@@ -20,6 +22,7 @@ const columns: { title: string; status: TaskStatus; colorClass: string }[] = [
   { title: 'Rejected', status: 'rejected', colorClass: 'bg-[#E05252]/15 text-[#E05252] border-[#E05252]/30' },
 ];
 
+// Tablero interactivo Kanban para gestión y supervisión de tareas técnicas
 export default function TaskBoard() {
   const user = useAuthStore((s) => s.user);
   const isAdmin = 'role' in (user || {}) && (user as { role: string }).role === 'admin';
@@ -30,29 +33,53 @@ export default function TaskBoard() {
   const { clans } = useClans();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClanFilter, setSelectedClanFilter] = useState('all');
+  const [selectedPriorityFilter, setSelectedPriorityFilter] = useState('all');
+
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
     assigneeId: '',
     clanId: '',
+    dueDate: '',
+    githubUrl: '',
   });
 
   const [showDeleted, setShowDeleted] = useState(false);
   const { tasks, tasksDeleted, createTask, updateTaskStatus, deleteTask, restoreTask } = useTasks(showDeleted);
 
+  // Ordena y filtra tareas de cada columna según filtros activos y nivel de prioridad
   const priorityOrder = { high: 0, medium: 1, low: 2 };
   const tasksByStatus = (status: TaskStatus) => {
-    return (tasks.data?.filter((t) => t.status === status) || [])
-      .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    return (tasks.data?.filter((t) => {
+      if (t.status !== status) return false;
+      if (selectedClanFilter !== 'all' && t.clan?.id !== selectedClanFilter) return false;
+      if (selectedPriorityFilter !== 'all' && t.priority !== selectedPriorityFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesTitle = t.title.toLowerCase().includes(q);
+        const matchesDesc = t.description?.toLowerCase().includes(q);
+        const matchesAssignee = t.assignee?.name?.toLowerCase().includes(q);
+        const matchesClan = t.clan?.name?.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesDesc && !matchesAssignee && !matchesClan) return false;
+      }
+      return true;
+    }) || []).sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
   };
 
-  const handleStatusChange = (taskId: string, status: TaskStatus) => {
+  // Dispara la mutación para modificar el estado de una tarea con soporte de feedback
+  const handleStatusChange = (taskId: string, status: TaskStatus, feedback?: string | null) => {
     updateTaskStatus.mutate(
-      { id: taskId, status },
+      { id: taskId, status, feedback },
       {
         onSuccess: () => {
           toast.success(`Estado de task actualizado a ${status.toUpperCase()}`);
+          if (selectedTask?.id === taskId) {
+            setSelectedTask((prev) => (prev ? { ...prev, status, feedback: feedback !== undefined ? feedback : prev.feedback } : null));
+          }
         },
         onError: (err: any) => {
           toast.error(err?.response?.data?.message || 'Error al cambiar estado de la task');
@@ -61,12 +88,12 @@ export default function TaskBoard() {
     );
   };
 
+  // Valida los permisos de rol (RBAC) y transiciones válidas al arrastrar y soltar (Drag & Drop)
   const handleDropTask = (taskId: string, targetStatus: TaskStatus) => {
     const task = tasks.data?.find((t) => t.id === taskId);
     if (!task) return;
     if (task.status === targetStatus) return;
 
-    // RBAC validation logic:
     if (task.status === 'pending' && targetStatus === 'review') {
       const isAssignee = !!user?.id && task.assignee?.id === user.id;
       if (!isAssignee && !isAdmin) {
@@ -91,6 +118,7 @@ export default function TaskBoard() {
     handleStatusChange(taskId, targetStatus);
   };
 
+  // Envía la tarea a la papelera (soft delete)
   const handleDelete = (taskId: string) => {
     deleteTask.mutate(taskId, {
       onSuccess: () => toast.success('Task movida a eliminadas'),
@@ -98,6 +126,7 @@ export default function TaskBoard() {
     });
   };
 
+  // Recupera una tarea eliminada devolviéndola al tablero Kanban
   const handleRestore = (taskId: string) => {
     restoreTask.mutate(taskId, {
       onSuccess: () => toast.success('Task restaurada exitosamente'),
@@ -105,6 +134,7 @@ export default function TaskBoard() {
     });
   };
 
+  // Crea una nueva tarea técnica y la sitúa en estado pendiente
   const handleCreateTask = () => {
     if (!newTask.title.trim()) return;
     createTask.mutate(
@@ -114,11 +144,13 @@ export default function TaskBoard() {
         priority: newTask.priority,
         assigneeId: newTask.assigneeId || user?.id || '',
         clanId: newTask.clanId || undefined,
+        dueDate: newTask.dueDate || undefined,
+        githubUrl: newTask.githubUrl ? newTask.githubUrl.trim() : undefined,
       },
       {
         onSuccess: () => {
           toast.success('Nueva task creada con éxito');
-          setNewTask({ title: '', description: '', priority: 'medium', assigneeId: '', clanId: '' });
+          setNewTask({ title: '', description: '', priority: 'medium', assigneeId: '', clanId: '', dueDate: '', githubUrl: '' });
           setIsDialogOpen(false);
         },
         onError: (err: any) => {
@@ -126,6 +158,52 @@ export default function TaskBoard() {
         },
       }
     );
+  };
+
+  // Exporta la lista actual de tareas filtradas a un archivo CSV descargable
+  const handleExportCSV = () => {
+    const allFilteredTasks = tasks.data?.filter((t) => {
+      if (selectedClanFilter !== 'all' && t.clan?.id !== selectedClanFilter) return false;
+      if (selectedPriorityFilter !== 'all' && t.priority !== selectedPriorityFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesTitle = t.title.toLowerCase().includes(q);
+        const matchesDesc = t.description?.toLowerCase().includes(q);
+        const matchesAssignee = t.assignee?.name?.toLowerCase().includes(q);
+        const matchesClan = t.clan?.name?.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesDesc && !matchesAssignee && !matchesClan) return false;
+      }
+      return true;
+    }) || [];
+
+    if (allFilteredTasks.length === 0) {
+      toast.error('No hay tareas para exportar con los filtros actuales');
+      return;
+    }
+
+    const headers = ['ID', 'Título', 'Estado', 'Prioridad', 'Clan', 'Asignado', 'Fecha Límite', 'GitHub PR', 'Feedback'];
+    const rows = allFilteredTasks.map((t) => [
+      `"${t.id}"`,
+      `"${t.title.replace(/"/g, '""')}"`,
+      `"${t.status}"`,
+      `"${t.priority}"`,
+      `"${t.clan?.name || 'Sin Clan'}"`,
+      `"${t.assignee?.name || 'Sin Asignar'}"`,
+      `"${t.dueDate ? new Date(t.dueDate).toLocaleDateString('es-ES') : 'N/A'}"`,
+      `"${t.githubUrl || 'N/A'}"`,
+      `"${(t.feedback || '').replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `tasks-report-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Reporte de tareas exportado a CSV');
   };
 
   if (tasks.isLoading) {
@@ -136,7 +214,7 @@ export default function TaskBoard() {
     );
   }
 
-  // Calculate KPI stats
+  // Métricas agregadas en tiempo real para las tarjetas KPI
   const totalTasks = tasks.data?.length || 0;
   const approvedTasks = tasks.data?.filter((t) => t.status === 'approved').length || 0;
   const pipelineTasks = tasks.data?.filter((t) => t.status === 'pending' || t.status === 'review').length || 0;
@@ -146,7 +224,7 @@ export default function TaskBoard() {
 
   return (
     <div className="space-y-6">
-      {/* KPI Metrics Summary Strip (StitchMCP Urban Slate Design) */}
+      {/* Resumen de métricas clave KPI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs text-[#7B7F8A]">
@@ -195,7 +273,7 @@ export default function TaskBoard() {
         </div>
       </div>
 
-      {/* Kanban Header */}
+      {/* Cabecera del tablero con acciones de crear y papelera */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze">
@@ -208,6 +286,18 @@ export default function TaskBoard() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Botón para exportar reporte de tareas en CSV */}
+          <Button
+            onClick={handleExportCSV}
+            variant="outline"
+            className="h-10 text-xs font-bold rounded-xl border border-white/10 glass-panel text-muted-foreground hover:text-foreground hover:bg-white/5"
+            title="Exportar tareas visibles a CSV"
+          >
+            <Download className="w-4 h-4 mr-2 text-[#6B7C98]" />
+            Exportar CSV
+          </Button>
+
+          {/* Botón para ver tareas eliminadas (solo administradores) */}
           {isAdmin && (
             <Button
               onClick={() => setShowDeleted(!showDeleted)}
@@ -223,6 +313,7 @@ export default function TaskBoard() {
             </Button>
           )}
 
+          {/* Diálogo modal para registrar una nueva tarea técnica */}
           {canCreateTasks && (
             <>
               <Button
@@ -306,6 +397,30 @@ export default function TaskBoard() {
                         ))}
                       </select>
                     </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="taskDueDate" className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#6B7C98]" /> Fecha Límite (Due Date)
+                      </Label>
+                      <Input
+                        id="taskDueDate"
+                        type="date"
+                        value={newTask.dueDate}
+                        onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                        className="glass-input h-10 rounded-xl text-xs text-foreground [color-scheme:dark]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="taskGithubUrl" className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <GitPullRequest className="w-3.5 h-3.5 text-[#AB978C]" /> Enlace a PR / Commit en GitHub (Opcional)
+                      </Label>
+                      <Input
+                        id="taskGithubUrl"
+                        value={newTask.githubUrl}
+                        onChange={(e) => setNewTask({ ...newTask, githubUrl: e.target.value })}
+                        placeholder="https://github.com/usuario/repo/pull/123"
+                        className="glass-input h-10 rounded-xl text-xs text-foreground"
+                      />
+                    </div>
                     <Button
                       onClick={handleCreateTask}
                       className="w-full h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze mt-2"
@@ -326,7 +441,7 @@ export default function TaskBoard() {
         </div>
       </div>
 
-      {/* Deleted Tasks Drawer Panel */}
+      {/* Panel desplegable de tareas archivadas / eliminadas */}
       {showDeleted && isAdmin && (
         <div className="glass-panel border-destructive/30 rounded-2xl p-4 bg-destructive/5 space-y-3">
           <div className="flex items-center justify-between">
@@ -380,7 +495,65 @@ export default function TaskBoard() {
         </div>
       )}
 
-      {/* Columns Grid */}
+      {/* Barra de Filtros Rápidos (Búsqueda predictiva, Clan y Prioridad) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 glass-panel p-3 rounded-2xl border border-white/5">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Filtrar tasks por título, descripción, coder o clan..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="glass-input h-10 pl-10 rounded-xl text-xs"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {/* Selector de Clan */}
+          <select
+            value={selectedClanFilter}
+            onChange={(e) => setSelectedClanFilter(e.target.value)}
+            className="h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30 bg-[#14171E] min-w-[140px]"
+          >
+            <option value="all">Todos los Clanes</option>
+            {clans.data?.map((c) => (
+              <option key={c.id} value={c.id} className="bg-[#14171E] text-foreground">
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Selector de Prioridad */}
+          <select
+            value={selectedPriorityFilter}
+            onChange={(e) => setSelectedPriorityFilter(e.target.value)}
+            className="h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30 bg-[#14171E] min-w-[130px]"
+          >
+            <option value="all">Todas las Prioridades</option>
+            <option value="high" className="bg-[#14171E] text-[#E05252]">Alta (High)</option>
+            <option value="medium" className="bg-[#14171E] text-[#AB978C]">Media (Medium)</option>
+            <option value="low" className="bg-[#14171E] text-[#7B7F8A]">Baja (Low)</option>
+          </select>
+
+          {/* Botón reset filtros si alguno está activo */}
+          {(searchQuery || selectedClanFilter !== 'all' || selectedPriorityFilter !== 'all') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedClanFilter('all');
+                setSelectedPriorityFilter('all');
+              }}
+              className="h-10 px-3 text-xs text-muted-foreground hover:text-[#AB978C] rounded-xl shrink-0"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1" />
+              Limpiar
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Cuadrícula de columnas del tablero Kanban */}
       <div className="flex gap-4 overflow-x-auto pb-4">
         {columns.map((col) => (
           <TaskColumn
@@ -392,9 +565,19 @@ export default function TaskBoard() {
             onStatusChange={handleStatusChange}
             onDelete={isAdmin ? handleDelete : undefined}
             onDropTask={handleDropTask}
+            onSelectTask={(t) => setSelectedTask(t)}
           />
         ))}
       </div>
+
+      {/* Modal detallado de tarea con notas del TL y acciones contextuales */}
+      <TaskDetailModal
+        task={selectedTask}
+        open={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onStatusChange={handleStatusChange}
+        onDelete={isAdmin ? handleDelete : undefined}
+      />
     </div>
   );
 }

@@ -5,13 +5,10 @@ import { seed } from '../scripts/seed.js';
 import { writeJSON, syncAllFromSupabase } from '../models/db.js';
 import { isSupabaseConfigured } from './supabase.js';
 
-/**
- * Ensures the database has valid demo accounts and correct password hashes.
- * Synchronizes with Supabase if configured.
- */
+// Inicializa la base de datos, sincroniza con Supabase y garantiza las cuentas demo
 export async function initDatabase() {
   try {
-    // 1. Sync from Supabase if connected
+    // 1. Sincronización inicial desde Supabase si las credenciales están configuradas
     if (isSupabaseConfigured) {
       console.log('☁️ Conectando con Supabase...');
       const synced = await syncAllFromSupabase();
@@ -22,19 +19,19 @@ export async function initDatabase() {
       }
     }
 
-    // 2. Check and initialize local accounts
+    // 2. Consulta y validación de usuarios existentes en la base de datos
     const teamLeaders = TeamLeaderModel.getAll();
     const admin = teamLeaders.find((t) => t.role === 'admin' || t.email === 'admin@coders.app');
     const coders = CoderModel.getAll();
 
-    // If no admin exists or database is empty or no coders exist, seed initial data
+    // Si no existe cuenta de administrador o la base de datos está vacía, genera los datos iniciales
     if (!admin || teamLeaders.length === 0 || coders.length === 0) {
       console.log('⚡ Base de datos incompleta o sin coders. Inicializando cuentas por defecto...');
       await seed();
       return;
     }
 
-    // Verify admin password hash matches Admin123!
+    // Valida y asegura el hash de la contraseña de admin@coders.app (Admin123!)
     const adminMatch = bcrypt.compareSync('Admin123!', admin.password);
     if (!adminMatch) {
       console.log('🔄 Actualizando credencial de admin@coders.app a Admin123!...');
@@ -42,7 +39,7 @@ export async function initDatabase() {
       TeamLeaderModel.update(admin.id, { password: newHash, role: 'admin' });
     }
 
-    // Verify team leader password hash
+    // Valida y asegura el hash de la contraseña del Team Leader demo (Tl123!)
     const tl = TeamLeaderModel.getByEmail('alex.tl@coders.app');
     if (tl && !bcrypt.compareSync('Tl123!', tl.password)) {
       console.log('🔄 Actualizando credencial de alex.tl@coders.app a Tl123!...');
@@ -50,7 +47,7 @@ export async function initDatabase() {
       TeamLeaderModel.update(tl.id, { password: tlHash });
     }
 
-    // Verify coder password hashes
+    // Valida y asegura los hashes de contraseña de los Coders demo (Coder123!)
     const currentCoders = CoderModel.getAll();
     for (const coder of currentCoders) {
       if ((coder.email === 'elena@coders.app' || coder.email === 'mateo@coders.app') && !bcrypt.compareSync('Coder123!', coder.password)) {

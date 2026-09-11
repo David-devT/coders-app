@@ -4,8 +4,10 @@ import CoderModel from '../models/Coder.js';
 import ClanModel from '../models/Clan.js';
 import TaskModel from '../models/Task.js';
 
+// Campos permitidos para actualización de líderes
 const ALLOWED_UPDATE = ['name', 'email', 'password', 'role'];
 
+// Filtra las propiedades permitidas en las actualizaciones
 function pickAllowed(data, allowed) {
   const result = {};
   for (const key of allowed) {
@@ -14,12 +16,14 @@ function pickAllowed(data, allowed) {
   return result;
 }
 
+// Remueve la contraseña del objeto retornado
 function sanitize(user) {
   if (!user) return null;
   const { password, ...rest } = user;
   return rest;
 }
 
+// Resuelve y adjunta la lista de clanes liderados por este Team Leader
 function enrich(tl) {
   if (!tl) return null;
   const s = sanitize(tl);
@@ -30,16 +34,19 @@ function enrich(tl) {
   return s;
 }
 
+// Retorna todos los líderes de equipo enriquecidos con sus clanes
 export const getAll = async () => {
   const teamLeaders = TeamLeaderModel.getAll();
   return teamLeaders.map(enrich);
 };
 
+// Retorna un líder específico por su identificador
 export const getById = async (id) => {
   const tl = TeamLeaderModel.getById(id);
   return tl ? enrich(tl) : null;
 };
 
+// Crea un nuevo líder validando email único y encriptando contraseña
 export const create = async ({ name, email, password, role }) => {
   if (!name || !name.trim()) throw new Error('Name is required');
   if (!email || !email.trim()) throw new Error('Email is required');
@@ -63,6 +70,7 @@ export const create = async ({ name, email, password, role }) => {
   return enrich(tl);
 };
 
+// Modifica los datos o rol de un líder y rehashea la clave si se actualizó
 export const update = async (id, data) => {
   const current = TeamLeaderModel.getById(id);
   if (!current) throw new Error('Team Leader not found');
@@ -94,11 +102,12 @@ export const update = async (id, data) => {
   return enrich(updatedTL);
 };
 
+// Elimina un líder, desasigna sus clanes y desvincula sus tareas en cascada
 export const remove = async (id) => {
   const tl = TeamLeaderModel.remove(id);
   if (!tl) throw new Error('Team Leader not found');
 
-  // Cascade 1: Unset teamLeader in all led clans
+  // Desasigna el rol de líder en los clanes dirigidos
   const clans = ClanModel.getAll();
   for (const clan of clans) {
     if (clan.teamLeader === id) {
@@ -106,7 +115,7 @@ export const remove = async (id) => {
     }
   }
 
-  // Cascade 2: Unassign tasks
+  // Desasigna las tareas que tenía asignadas
   const tasks = TaskModel.getAll();
   for (const task of tasks) {
     if (task.assigneeId === id) {
@@ -117,6 +126,7 @@ export const remove = async (id) => {
   return sanitize(tl);
 };
 
+// Asciende a un Coder al rol de Team Leader preservando sus credenciales y tareas
 export const promote = async (coderId) => {
   if (!coderId) throw new Error('Coder ID is required');
   const coder = CoderModel.getById(coderId);
@@ -125,7 +135,7 @@ export const promote = async (coderId) => {
   const existingTL = TeamLeaderModel.getByEmail(coder.email);
   if (existingTL) throw new Error('Email already registered as team leader');
 
-  // Create TL with coder's existing password hash
+  // Crea el registro en Team Leaders transfiriendo el hash de contraseña
   const tl = TeamLeaderModel.create({
     name: coder.name,
     email: coder.email,
@@ -133,7 +143,7 @@ export const promote = async (coderId) => {
     role: 'teamLeader',
   });
 
-  // Migrate tasks assigned to the coder to the new TL id
+  // Reasigna las tareas técnicas al nuevo identificador
   const tasks = TaskModel.getAll();
   for (const task of tasks) {
     if (task.assigneeId === coderId) {
@@ -141,7 +151,7 @@ export const promote = async (coderId) => {
     }
   }
 
-  // Remove coder from their clan if assigned
+  // Desvincula al coder de la lista de miembros de su clan
   if (coder.clan) {
     const clan = ClanModel.getById(coder.clan);
     if (clan && Array.isArray(clan.coders)) {
@@ -151,12 +161,13 @@ export const promote = async (coderId) => {
     }
   }
 
-  // Delete coder
+  // Elimina el registro anterior de coder
   CoderModel.remove(coderId);
 
   return enrich(tl);
 };
 
+// Degrada a un Team Leader al rol de Coder preservando sus tareas (bloquea administradores)
 export const demote = async (tlId) => {
   if (!tlId) throw new Error('Team Leader ID is required');
   const tl = TeamLeaderModel.getById(tlId);
@@ -169,7 +180,7 @@ export const demote = async (tlId) => {
   const existingCoder = CoderModel.getByEmail(tl.email);
   if (existingCoder) throw new Error('Email already registered as coder');
 
-  // Create Coder with TL's existing password hash
+  // Crea el registro de coder con el hash de contraseña existente
   const coder = CoderModel.create({
     name: tl.name,
     email: tl.email,
@@ -177,7 +188,7 @@ export const demote = async (tlId) => {
     clan: null,
   });
 
-  // Migrate tasks assigned to the TL to the new Coder id
+  // Reasigna las tareas al nuevo ID de coder
   const tasks = TaskModel.getAll();
   for (const task of tasks) {
     if (task.assigneeId === tlId) {
@@ -185,7 +196,7 @@ export const demote = async (tlId) => {
     }
   }
 
-  // Dissociate TL from all clans
+  // Desasigna el liderazgo de clanes que dirigía
   const clans = ClanModel.getAll();
   for (const clan of clans) {
     if (clan.teamLeader === tlId) {
@@ -193,7 +204,7 @@ export const demote = async (tlId) => {
     }
   }
 
-  // Delete TL
+  // Elimina el registro de Team Leader
   TeamLeaderModel.remove(tlId);
 
   return { ...sanitize(coder), role: 'coder' };

@@ -1,5 +1,6 @@
 import * as tasksService from '../services/tasks.service.js';
 
+// Retorna las tareas visibles según el rol del usuario autenticado
 export const getAll = async (req, res) => {
   try {
     const tasks = await tasksService.getByRole(req.user.id, req.user.role);
@@ -9,6 +10,7 @@ export const getAll = async (req, res) => {
   }
 };
 
+// Retorna una tarea específica por su ID
 export const getById = async (req, res) => {
   try {
     const task = await tasksService.getById(req.params.id);
@@ -21,23 +23,26 @@ export const getById = async (req, res) => {
   }
 };
 
+// Crea una nueva tarea técnica y la sitúa en estado pendiente con autoría
 export const create = async (req, res) => {
   try {
-    const task = await tasksService.create(req.body);
+    const task = await tasksService.create({ ...req.body, creator: req.user });
     res.status(201).json({ ok: true, data: task });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }
 };
 
+// Actualiza el estado Kanban aplicando validación de transiciones y permisos
 export const updateStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, feedback } = req.body;
     const task = await tasksService.updateStatus(
       req.params.id,
       status,
       req.user.id,
-      req.user.role
+      req.user.role,
+      feedback
     );
     res.status(200).json({ ok: true, data: task });
   } catch (error) {
@@ -45,6 +50,7 @@ export const updateStatus = async (req, res) => {
   }
 };
 
+// Modifica las propiedades descriptivas de una tarea
 export const update = async (req, res) => {
   try {
     const task = await tasksService.update(req.params.id, req.body);
@@ -55,6 +61,7 @@ export const update = async (req, res) => {
   }
 };
 
+// Realiza la eliminación lógica (soft delete) de una tarea
 export const remove = async (req, res) => {
   try {
     await tasksService.remove(req.params.id);
@@ -65,6 +72,7 @@ export const remove = async (req, res) => {
   }
 };
 
+// Retorna las tareas que se encuentran en la papelera de reciclaje
 export const getDeleted = async (req, res) => {
   try {
     const tasks = await tasksService.getDeleted();
@@ -74,6 +82,7 @@ export const getDeleted = async (req, res) => {
   }
 };
 
+// Restaura una tarea eliminada devolviéndola al estado activo
 export const restore = async (req, res) => {
   try {
     const task = await tasksService.restore(req.params.id);

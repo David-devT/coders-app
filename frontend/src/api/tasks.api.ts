@@ -16,14 +16,23 @@ export const tasksApi = {
   },
 
   // POST /api/tasks - Crear una nueva tarea (solo teamLeader/admin)
-  create: async (task: { title: string; description?: string; priority: string; assigneeId: string; clanId?: string }) => {
+  create: async (task: {
+    title: string;
+    description?: string;
+    priority: string;
+    assigneeId: string;
+    clanId?: string;
+    dueDate?: string | null;
+    feedback?: string | null;
+    githubUrl?: string | null;
+  }) => {
     const { data } = await api.post<ApiResponse<Task>>('/tasks', task);
     return data.data;
   },
 
-  // PATCH /api/tasks/:id/status - Cambiar estado de la tarea
-  updateStatus: async (id: string, status: TaskStatus) => {
-    const { data } = await api.patch<ApiResponse<Task>>(`/tasks/${id}/status`, { status });
+  // PATCH /api/tasks/:id/status - Cambiar estado de la tarea con feedback opcional
+  updateStatus: async (id: string, status: TaskStatus, feedback?: string | null) => {
+    const { data } = await api.patch<ApiResponse<Task>>(`/tasks/${id}/status`, { status, feedback });
     return data.data;
   },
 

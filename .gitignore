@@ -1,47 +1,65 @@
 # ==========================================
-# 🔒 CODERS APP - GITIGNORE
+# 🔒 CODERS-APP - SEGURIDAD Y GITIGNORE
 # ==========================================
 
 # ------------------------------------------
-# Environment Variables & Secrets (CRITICAL)
+# Variables de Entorno y Claves Secretas
 # ------------------------------------------
 .env
 .env.*
 *.env
+*.env*
 backend/.env
 frontend/.env
 *.env.local
 *.env.development.local
 *.env.test.local
 *.env.production.local
-
-*.env*
+.env.vault
+.env.keys
+.env.me
+*.env.vault
+*.env.keys
 
 # ------------------------------------------
-# Credentials, Keys & Passwords (CRITICAL)
+# Credenciales, Tokens y Cuentas de Servicio
 # ------------------------------------------
 credentials.txt
 *.credentials.txt
+*.credentials*
 cuentas.txt
 passwords.txt
 secrets.txt
-*.pem
+*secret*.txt
+*token*.txt
+*.token
 *.key
+*.pem
 *.cert
+*.crt
 *.pfx
 *.pkcs12
+*.id_rsa
+id_rsa*
+id_ed25519*
+serviceAccount*.json
+*credentials*.json
+supabase-keys*.json
 
 # ------------------------------------------
-# Local Database Files & Cache
+# Base de Datos Local y Caché de Persistencia
 # ------------------------------------------
 backend/src/data/
+data/
 *.sqlite
 *.sqlite3
 *.db
+*.sql
 *.sql.gz
+*.dump
 
 # ------------------------------------------
-# Dependencies & Package Managers
+# Dependencias de Paquetes
 # ------------------------------------------
 node_modules/
 backend/node_modules/
@@ -50,7 +68,7 @@ frontend/node_modules/
 .pnp.js
 
 # ------------------------------------------
-# Build Outputs & Cache
+# Salidas de Compilación y Caché
 # ------------------------------------------
 dist/
 dist-ssr/
@@ -62,7 +80,7 @@ frontend/dist/
 .turbo/
 
 # ------------------------------------------
-# Logs & Debugging
+# Logs y Depuración
 # ------------------------------------------
 logs/
 *.log
@@ -71,9 +89,12 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+.node_repl_history
+.bash_history
+.zsh_history
 
 # ------------------------------------------
-# IDE & Code Editors
+# Editores e IDEs
 # ------------------------------------------
 .vscode/*
 !.vscode/extensions.json
@@ -86,7 +107,7 @@ lerna-debug.log*
 *.swp
 
 # ------------------------------------------
-# Operating System Files
+# Archivos del Sistema Operativo
 # ------------------------------------------
 .DS_Store
 .DS_Store?
@@ -96,3 +117,19 @@ lerna-debug.log*
 ehthumbs.db
 Thumbs.db
 [Dd]esktop.ini
+
+# ------------------------------------------
+# Archivos Temporales y Respaldos
+# ------------------------------------------
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*~
+
+# ------------------------------------------
+# Agentes de IA y Entornos de Ejecución
+# ------------------------------------------
+.gemini/
+.antigravity/

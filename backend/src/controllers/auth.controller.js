@@ -1,5 +1,6 @@
 import * as authService from '../services/auth.service.js';
 
+// Procesa el registro de un nuevo Coder y devuelve usuario y token
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -10,6 +11,7 @@ export const register = async (req, res) => {
   }
 };
 
+// Autentica las credenciales de un usuario y emite un token JWT
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -20,6 +22,7 @@ export const login = async (req, res) => {
   }
 };
 
+// Devuelve el perfil completo del usuario autenticado actual
 export const getMe = async (req, res) => {
   try {
     const user = await authService.getMe(req.user.id, req.user.role);

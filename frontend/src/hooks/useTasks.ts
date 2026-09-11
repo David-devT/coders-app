@@ -30,8 +30,8 @@ export const useTasks = (showDeleted = false) => {
 
   // Mutación: actualizar estado de tarea → invalida caché de 'tasks'
   const updateTaskStatus = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: TaskStatus }) =>
-      tasksApi.updateStatus(id, status),
+    mutationFn: ({ id, status, feedback }: { id: string; status: TaskStatus; feedback?: string | null }) =>
+      tasksApi.updateStatus(id, status, feedback),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 

@@ -1,5 +1,6 @@
 import * as clansService from '../services/clans.service.js';
 
+// Retorna todos los clanes técnicos existentes
 export const getAll = async (req, res) => {
   try {
     const clans = await clansService.getAll();
@@ -9,6 +10,7 @@ export const getAll = async (req, res) => {
   }
 };
 
+// Retorna los datos de un clan por su identificador
 export const getById = async (req, res) => {
   try {
     const clan = await clansService.getById(req.params.id);
@@ -21,6 +23,7 @@ export const getById = async (req, res) => {
   }
 };
 
+// Crea un nuevo clan con su líder de equipo asignado
 export const create = async (req, res) => {
   try {
     const clan = await clansService.create(req.body);
@@ -30,6 +33,7 @@ export const create = async (req, res) => {
   }
 };
 
+// Actualiza el nombre, descripción o líder de un clan
 export const update = async (req, res) => {
   try {
     const clan = await clansService.update(req.params.id, req.body);
@@ -40,6 +44,7 @@ export const update = async (req, res) => {
   }
 };
 
+// Elimina un clan y reasigna los programadores pertenecientes
 export const remove = async (req, res) => {
   try {
     await clansService.remove(req.params.id);

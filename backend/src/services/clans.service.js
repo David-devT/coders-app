@@ -3,8 +3,10 @@ import TeamLeaderModel from '../models/TeamLeader.js';
 import CoderModel from '../models/Coder.js';
 import TaskModel from '../models/Task.js';
 
+// Campos permitidos para actualización de un clan
 const ALLOWED_UPDATE = ['name', 'description', 'teamLeader', 'coders'];
 
+// Filtra las propiedades permitidas en las peticiones de actualización
 function pickAllowed(data, allowed) {
   const result = {};
   for (const key of allowed) {
@@ -13,6 +15,7 @@ function pickAllowed(data, allowed) {
   return result;
 }
 
+// Resuelve y adjunta los datos de líder y lista de miembros del clan
 function enrich(clan) {
   if (!clan) return null;
   const result = { ...clan };
@@ -39,16 +42,19 @@ function enrich(clan) {
   return result;
 }
 
+// Retorna todos los clanes con líderes y miembros enriquecidos
 export const getAll = async () => {
   const clans = ClanModel.getAll();
   return clans.map(enrich);
 };
 
+// Retorna un clan por su identificador
 export const getById = async (id) => {
   const clan = ClanModel.getById(id);
   return clan ? enrich(clan) : null;
 };
 
+// Crea un clan verificando nombre único, límite de 2 clanes por TL y asignando coders
 export const create = async ({ name, description, teamLeader, coders }) => {
   if (!name || !name.trim()) throw new Error('Clan name is required');
 
@@ -60,6 +66,7 @@ export const create = async ({ name, description, teamLeader, coders }) => {
     const tl = TeamLeaderModel.getById(teamLeader);
     if (!tl) throw new Error('Assigned Team Leader not found');
 
+    // Regla de negocio: un Team Leader no puede liderar más de 2 clanes
     const allClans = ClanModel.getAll();
     const tlClans = allClans.filter((c) => c.teamLeader === teamLeader);
     if (tlClans.length >= 2) {
@@ -76,7 +83,7 @@ export const create = async ({ name, description, teamLeader, coders }) => {
     coders: coderIds,
   });
 
-  // Sync coders clan field
+  // Asigna el nuevo clan en los registros individuales de cada coder
   for (const cId of coderIds) {
     const coder = CoderModel.getById(cId);
     if (coder) {
@@ -87,6 +94,7 @@ export const create = async ({ name, description, teamLeader, coders }) => {
   return enrich(created);
 };
 
+// Actualiza los datos del clan, valida límite de asignación de TL y sincroniza lista de coders
 export const update = async (id, data) => {
   const current = ClanModel.getById(id);
   if (!current) throw new Error('Clan not found');
@@ -117,18 +125,17 @@ export const update = async (id, data) => {
     }
   }
 
+  // Sincronización de membresía en coders removidos y agregados
   if (safe.coders !== undefined && Array.isArray(safe.coders)) {
     const oldCoders = current.coders || [];
     const newCoders = safe.coders;
 
-    // Removed coders
     for (const cId of oldCoders) {
       if (!newCoders.includes(cId)) {
         CoderModel.update(cId, { clan: null });
       }
     }
 
-    // Added coders
     for (const cId of newCoders) {
       if (!oldCoders.includes(cId)) {
         CoderModel.update(cId, { clan: id });
@@ -140,11 +147,12 @@ export const update = async (id, data) => {
   return enrich(updatedClan);
 };
 
+// Elimina el clan y desvincula a sus miembros y tareas asignadas
 export const remove = async (id) => {
   const clan = ClanModel.remove(id);
   if (!clan) throw new Error('Clan not found');
 
-  // Cascade 1: Unset clan on all member coders
+  // Desvincula a los coders miembros
   const coders = CoderModel.getAll();
   for (const coder of coders) {
     if (coder.clan === id) {
@@ -152,7 +160,7 @@ export const remove = async (id) => {
     }
   }
 
-  // Cascade 2: Unset clan on all tasks
+  // Desvincula las tareas del clan
   const tasks = TaskModel.getAll();
   for (const task of tasks) {
     if (task.clanId === id) {

@@ -4,8 +4,10 @@ import TeamLeaderModel from '../models/TeamLeader.js';
 import ClanModel from '../models/Clan.js';
 import TaskModel from '../models/Task.js';
 
+// Campos permitidos para actualización segura
 const ALLOWED_UPDATE = ['name', 'email', 'password', 'clan'];
 
+// Filtra exclusivamente los campos permitidos del objeto de entrada
 function pickAllowed(data, allowed) {
   const result = {};
   for (const key of allowed) {
@@ -14,12 +16,14 @@ function pickAllowed(data, allowed) {
   return result;
 }
 
+// Remueve la contraseña antes de retornar el objeto
 function sanitize(user) {
   if (!user) return null;
   const { password, ...rest } = user;
   return rest;
 }
 
+// Enriquece el coder agregando información del clan al que pertenece y rol asignado
 function enrich(coder) {
   if (!coder) return null;
   const s = sanitize(coder);
@@ -30,16 +34,19 @@ function enrich(coder) {
   return { ...s, role: 'coder' };
 }
 
+// Retorna todos los programadores registrados enriquecidos con su clan
 export const getAll = async () => {
   const coders = CoderModel.getAll();
   return coders.map(enrich);
 };
 
+// Busca un programador por ID y retorna su perfil con datos del clan
 export const getById = async (id) => {
   const coder = CoderModel.getById(id);
   return coder ? enrich(coder) : null;
 };
 
+// Crea un programador, valida email único, cifra contraseña y sincroniza con el clan
 export const create = async ({ name, email, password, clan }) => {
   if (!name || !name.trim()) throw new Error('Name is required');
   if (!email || !email.trim()) throw new Error('Email is required');
@@ -67,7 +74,7 @@ export const create = async ({ name, email, password, clan }) => {
     clan: clanId,
   });
 
-  // Bidirectional sync: add coder to clan
+  // Sincronización bidireccional: agrega el coder al listado del clan
   if (clanId) {
     const targetClan = ClanModel.getById(clanId);
     if (targetClan && !targetClan.coders?.includes(coder.id)) {
@@ -79,12 +86,14 @@ export const create = async ({ name, email, password, clan }) => {
   return enrich(coder);
 };
 
+// Actualiza los datos de un programador y transfiere su membresía si cambia de clan
 export const update = async (id, data) => {
   const current = CoderModel.getById(id);
   if (!current) throw new Error('Coder not found');
 
   const safe = pickAllowed(data, ALLOWED_UPDATE);
 
+  // Validación de unicidad de email al modificarlo
   if (safe.email) {
     const normalizedEmail = safe.email.trim().toLowerCase();
     if (normalizedEmail !== current.email.toLowerCase()) {
@@ -97,6 +106,7 @@ export const update = async (id, data) => {
     }
   }
 
+  // Cifrado de nueva contraseña si fue enviada
   if (safe.password) {
     if (safe.password.trim().length < 6) {
       throw new Error('Password must be at least 6 characters');
@@ -106,9 +116,9 @@ export const update = async (id, data) => {
     delete safe.password;
   }
 
-  // Handle Clan change sync
+  // Sincronización de membresía al cambiar de clan
   if (safe.clan !== undefined && safe.clan !== current.clan) {
-    // Remove from previous clan
+    // Remueve del clan anterior
     if (current.clan) {
       const oldClan = ClanModel.getById(current.clan);
       if (oldClan) {
@@ -117,7 +127,7 @@ export const update = async (id, data) => {
         });
       }
     }
-    // Add to new clan
+    // Agrega al nuevo clan
     if (safe.clan) {
       const newClan = ClanModel.getById(safe.clan);
       if (!newClan) throw new Error('Target clan does not exist');
@@ -133,11 +143,12 @@ export const update = async (id, data) => {
   return enrich(updatedCoder);
 };
 
+// Elimina un programador, desvincula clanes y desasigna tareas pendientes en cascada
 export const remove = async (id) => {
   const coder = CoderModel.remove(id);
   if (!coder) throw new Error('Coder not found');
 
-  // Cascade 1: Remove coder from all clans
+  // Remueve al coder de la lista de miembros de cualquier clan
   const clans = ClanModel.getAll();
   for (const clan of clans) {
     if (clan.coders?.includes(id)) {
@@ -147,7 +158,7 @@ export const remove = async (id) => {
     }
   }
 
-  // Cascade 2: Unassign tasks
+  // Desasigna las tareas asignadas a este coder
   const tasks = TaskModel.getAll();
   for (const task of tasks) {
     if (task.assigneeId === id) {
