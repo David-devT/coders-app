@@ -114,25 +114,25 @@ export default function TeamLeadersTable() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 flex flex-col space-y-4 sm:space-y-6">
       {/* Encabezado con título y acciones de creación y promoción */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-3.5 sm:p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze">
-            <Users className="w-6 h-6 text-[#AB978C]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze shrink-0">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-[#AB978C]" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-foreground tracking-tight">Directorio de Team Leaders</h1>
-            <p className="text-xs text-muted-foreground">Líderes técnicos, roles jerárquicos y asignación de clanes</p>
+            <h1 className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight">Directorio de Team Leaders</h1>
+            <p className="text-[11px] sm:text-xs text-muted-foreground">Líderes técnicos, roles jerárquicos y asignación de clanes</p>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Modal de ascenso de Coder */}
           <Button
             variant="outline"
             onClick={() => setPromoteOpen(true)}
-            className="h-10 border-[#6B7C98]/40 text-[#6B7C98] hover:bg-[#6B7C98]/15 rounded-xl font-bold text-xs"
+            className="flex-1 sm:flex-initial h-10 border-[#6B7C98]/40 text-[#6B7C98] hover:bg-[#6B7C98]/15 rounded-xl font-bold text-xs cursor-pointer"
           >
             <ArrowUp className="w-4 h-4 mr-1.5" /> Promover Coder
           </Button>
@@ -140,7 +140,7 @@ export default function TeamLeadersTable() {
           {/* Modal de creación directa */}
           <Button
             onClick={() => setFormOpen(true)}
-            className="h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all"
+            className="flex-1 sm:flex-initial h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 mr-1.5" /> Agregar Leader
           </Button>
@@ -164,37 +164,38 @@ export default function TeamLeadersTable() {
           <div className="w-8 h-8 border-2 border-[#AB978C]/30 border-t-[#AB978C] rounded-full animate-spin glow-bronze" />
         </div>
       ) : (
-        <div className="glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
-          <Table>
-            <TableHeader className="bg-white/5">
-              <TableRow className="hover:bg-transparent border-white/5">
-                <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Líder de Equipo</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Correo</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Rol</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Clans a Cargo</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-12 text-xs">
-                    No se encontraron Team Leaders que coincidan con la búsqueda
-                  </TableCell>
+        <div className="flex-1 flex flex-col justify-between glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl min-h-[360px] sm:min-h-0">
+          <div className="overflow-x-auto touch-scroll">
+            <Table className="min-w-[620px] sm:min-w-full">
+              <TableHeader className="bg-white/5">
+                <TableRow className="hover:bg-transparent border-white/5">
+                  <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Perfil Líder</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Correo</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Rol</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Clans a Cargo</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>
                 </TableRow>
-              ) : (
-                paginatedItems?.map((tl, i) => (
-                  <TableRow key={tl.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                    <TableCell className="text-xs font-medium text-muted-foreground">{(currentPage - 1) * pageSize + i + 1}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#AB978C] to-[#6B7C98] flex items-center justify-center font-bold text-xs text-[#0E1015]">
-                          {tl.name.charAt(0)}
-                        </div>
-                        <span className="font-bold text-xs text-foreground">{tl.name}</span>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {filtered?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-12 text-xs">
+                      No se encontraron Team Leaders que coincidan con la búsqueda
                     </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedItems?.map((tl, i) => (
+                    <TableRow key={tl.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                      <TableCell className="text-xs font-medium text-muted-foreground">{(currentPage - 1) * pageSize + i + 1}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#AB978C] to-[#6B7C98] flex items-center justify-center font-bold text-xs text-[#0E1015]">
+                            {tl.name.charAt(0)}
+                          </div>
+                          <span className="font-bold text-xs text-foreground">{tl.name}</span>
+                        </div>
+                      </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{tl.email}</TableCell>
                     <TableCell>
                       <Badge
@@ -225,51 +226,52 @@ export default function TeamLeadersTable() {
                         <span className="text-xs text-muted-foreground/60 italic">Sin Clans</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
-                        {tl.role !== 'admin' && (
+                      <TableCell className="text-right">
+                        <div className="flex gap-1 justify-end">
+                          {tl.role !== 'admin' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-amber-400 hover:bg-amber-400/15 rounded-xl cursor-pointer"
+                              onClick={() => { setSelectedTL(tl); setDemoteOpen(true); }}
+                              title="Degradar a Coder"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="w-8 h-8 text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 rounded-xl"
-                            onClick={() => { setSelectedTL(tl); setDemoteOpen(true); }}
-                            title="Degradar a Coder"
+                            className="w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl cursor-pointer"
+                            onClick={() => { setSelectedTL(tl); setFormOpen(true); }}
+                            title="Editar Leader"
                           >
-                            <ArrowDown className="w-3.5 h-3.5" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="w-8 h-8 text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl"
-                          onClick={() => { setSelectedTL(tl); setFormOpen(true); }}
-                          title="Editar Leader"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        {tl.role !== 'admin' && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl"
-                            onClick={() => { setSelectedTL(tl); setDeleteOpen(true); }}
-                            title="Eliminar Leader"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                          {tl.role !== 'admin' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl cursor-pointer"
+                              onClick={() => { setSelectedTL(tl); setDeleteOpen(true); }}
+                              title="Eliminar Leader"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-          {/* Paginación */}
+          {/* Paginación responsiva */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/5 bg-white/[0.02]">
-              <span className="text-xs text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-white/5 bg-white/[0.02]">
+              <span className="text-xs text-muted-foreground text-center sm:text-left">
                 Mostrando <span className="font-semibold text-foreground">{(currentPage - 1) * pageSize + 1}</span> -{' '}
                 <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, totalItems)}</span> de{' '}
                 <span className="font-semibold text-[#AB978C]">{totalItems}</span> líderes
@@ -280,7 +282,7 @@ export default function TeamLeadersTable() {
                   size="sm"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="h-8 px-2.5 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40"
+                  className="h-9 sm:h-8 px-3 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40 cursor-pointer"
                 >
                   <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Anterior
                 </Button>
@@ -292,7 +294,7 @@ export default function TeamLeadersTable() {
                   size="sm"
                   disabled={currentPage >= totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="h-8 px-2.5 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40"
+                  className="h-9 sm:h-8 px-3 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40 cursor-pointer"
                 >
                   Siguiente <ChevronRight className="w-3.5 h-3.5 ml-1" />
                 </Button>
@@ -322,7 +324,7 @@ export default function TeamLeadersTable() {
 
       {/* Diálogo modal para promover Coder a Team Leader */}
       <Dialog open={promoteOpen} onOpenChange={setPromoteOpen}>
-        <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
+        <DialogContent className="glass-card border-white/10 p-5 sm:p-6 rounded-2xl w-[calc(100vw-1.5rem)] max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground">Promover Coder a Team Leader</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -333,7 +335,7 @@ export default function TeamLeadersTable() {
             <select
               value={selectedCoderId}
               onChange={(e) => setSelectedCoderId(e.target.value)}
-              className="w-full h-11 px-3.5 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30"
+              className="w-full h-11 px-3.5 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30 cursor-pointer"
             >
               <option value="">Selecciona un coder...</option>
               {coders.data?.map((c) => (
@@ -345,7 +347,7 @@ export default function TeamLeadersTable() {
             <Button
               onClick={handlePromote}
               disabled={!selectedCoderId || promoteCoder.isPending}
-              className="w-full h-11 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze"
+              className="w-full h-11 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze cursor-pointer"
             >
               Confirmar Promoción
             </Button>
@@ -355,7 +357,7 @@ export default function TeamLeadersTable() {
 
       {/* Diálogo modal para degradar Team Leader a Coder */}
       <Dialog open={demoteOpen} onOpenChange={setDemoteOpen}>
-        <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
+        <DialogContent className="glass-card border-white/10 p-5 sm:p-6 rounded-2xl w-[calc(100vw-1.5rem)] max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground">Degradar Team Leader</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">

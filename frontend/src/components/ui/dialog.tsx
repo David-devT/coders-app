@@ -53,7 +53,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-white/15 bg-[#14171E] p-6 text-sm text-foreground shadow-[0_25px_60px_rgba(0,0,0,0.95)] ring-1 ring-white/10 border-t-[#AB978C]/35 duration-150 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-1.5rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-white/15 bg-[#14171E] p-4 sm:p-6 text-sm text-foreground shadow-[0_25px_60px_rgba(0,0,0,0.95)] ring-1 ring-white/10 border-t-[#AB978C]/35 duration-150 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 max-h-[92vh] overflow-y-auto",
           className
         )}
         {...props}
@@ -65,7 +65,7 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-3 right-3 w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
+                className="absolute top-3 right-3 w-9 h-9 sm:w-8 sm:h-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors cursor-pointer"
                 size="icon"
               />
             }

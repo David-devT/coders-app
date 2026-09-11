@@ -117,7 +117,7 @@ export default function TaskDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="glass-card border-white/10 p-4 sm:p-6 rounded-2xl w-[calc(100vw-1.5rem)] sm:max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader className="space-y-2">
           {/* Cabecera con insignias de estado, prioridad y clan */}
           <div className="flex flex-wrap items-center gap-2">
@@ -279,11 +279,11 @@ export default function TaskDetailModal({
             </div>
           )}
 
-          {/* Barra de acciones contextuadas */}
+          {/* Barra de acciones contextuadas con soporte táctil */}
           <div className="pt-2 border-t border-white/5 flex flex-wrap gap-2 justify-end">
             {task.status === 'pending' && canMarkForReview && (
               <Button
-                className="bg-[#6B7C98] hover:bg-[#6B7C98]/90 text-white text-xs font-bold rounded-xl h-9"
+                className="flex-1 sm:flex-initial bg-[#6B7C98] hover:bg-[#6B7C98]/90 text-white text-xs font-bold rounded-xl h-10 sm:h-9 cursor-pointer"
                 onClick={() => handleAction('review')}
               >
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Enviar a Review
@@ -294,13 +294,13 @@ export default function TaskDetailModal({
               <>
                 <Button
                   variant="outline"
-                  className="border-destructive/40 text-destructive hover:bg-destructive/15 text-xs font-bold rounded-xl h-9"
+                  className="flex-1 sm:flex-initial border-destructive/40 text-destructive hover:bg-destructive/15 text-xs font-bold rounded-xl h-10 sm:h-9 cursor-pointer"
                   onClick={() => handleAction('rejected')}
                 >
                   <XCircle className="w-3.5 h-3.5 mr-1.5" /> Rechazar
                 </Button>
                 <Button
-                  className="bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] text-xs font-bold rounded-xl h-9 shadow-lg glow-bronze"
+                  className="flex-1 sm:flex-initial bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] text-xs font-bold rounded-xl h-10 sm:h-9 shadow-lg glow-bronze cursor-pointer"
                   onClick={() => handleAction('approved')}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Aprobar Tarea
@@ -311,7 +311,7 @@ export default function TaskDetailModal({
             {task.status === 'rejected' && canReopen && (
               <Button
                 variant="outline"
-                className="border-amber-500/40 text-amber-400 hover:bg-amber-500/15 text-xs font-bold rounded-xl h-9"
+                className="flex-1 sm:flex-initial border-amber-500/40 text-amber-400 hover:bg-amber-500/15 text-xs font-bold rounded-xl h-10 sm:h-9 cursor-pointer"
                 onClick={() => handleAction('pending')}
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Reabrir Tarea
@@ -321,7 +321,7 @@ export default function TaskDetailModal({
             {isAdmin && onDelete && (
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs font-semibold rounded-xl h-9 mr-auto"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs font-semibold rounded-xl h-10 sm:h-9 mr-auto cursor-pointer"
                 onClick={() => {
                   onDelete(task.id);
                   onClose();
@@ -333,7 +333,7 @@ export default function TaskDetailModal({
 
             <Button
               variant="outline"
-              className="border-white/10 glass-panel text-xs rounded-xl h-9"
+              className="flex-1 sm:flex-initial border-white/10 glass-panel text-xs rounded-xl h-10 sm:h-9 cursor-pointer"
               onClick={onClose}
             >
               Cerrar

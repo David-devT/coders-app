@@ -61,7 +61,7 @@ export default function DashboardLayout() {
       : 'bg-[#7B7F8A]/15 text-[#E9E6E7] border-[#7B7F8A]/30';
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden relative">
+    <div className="flex h-screen h-[100dvh] bg-background overflow-hidden relative">
       {/* Barra lateral con soporte para menú desplegable en móviles */}
       <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
 
@@ -70,11 +70,12 @@ export default function DashboardLayout() {
         {/* Barra superior con título de sección e información de usuario con contexto de apilamiento z-40 */}
         <header className="h-16 glass-panel border-b border-white/5 px-4 sm:px-6 flex items-center justify-between shrink-0 relative z-40">
           <div className="flex items-center gap-3">
-            {/* Botón hamburguesa para abrir navegación en dispositivos móviles */}
+            {/* Botón hamburguesa para abrir navegación en dispositivos móviles con área táctil accesible */}
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden w-9 h-9 rounded-xl glass-panel border border-[#7B7F8A]/30 flex items-center justify-center text-[#E9E6E7] hover:text-[#AB978C] hover:bg-white/5 transition-colors"
-              aria-label="Abrir menú"
+              className="md:hidden w-10 h-10 rounded-xl glass-panel border border-[#7B7F8A]/30 flex items-center justify-center text-[#E9E6E7] hover:text-[#AB978C] hover:bg-white/5 transition-colors cursor-pointer"
+              aria-label="Abrir menú de navegación"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -127,7 +128,7 @@ export default function DashboardLayout() {
 
               {/* Panel flotante del menú de usuario */}
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] p-3 z-50 animate-in fade-in-0 zoom-in-95 bg-[#14171E] text-foreground ring-1 ring-white/10 border-t-[#AB978C]/40">
+                <div className="fixed right-3 left-3 sm:left-auto top-16 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-64 max-w-xs ml-auto rounded-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] p-3 z-50 animate-in fade-in-0 zoom-in-95 bg-[#14171E] text-foreground ring-1 ring-white/10 border-t-[#AB978C]/40">
                   {/* Encabezado del menú con datos del usuario */}
                   <div className="p-2.5 mb-2 rounded-xl bg-white/[0.03] border border-white/5">
                     <div className="flex items-center gap-2.5">
@@ -179,7 +180,7 @@ export default function DashboardLayout() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-[#E05252] hover:bg-[#E05252]/10 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-[#E05252] hover:bg-[#E05252]/10 transition-colors text-left cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 text-[#E05252]/80" />
                     Cerrar Sesión
@@ -190,8 +191,8 @@ export default function DashboardLayout() {
           </div>
         </header>
 
-        {/* Contenedor dinámico donde se renderizan las rutas hijas */}
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Contenedor dinámico donde se renderizan las rutas hijas con aprovechamiento de altura */}
+        <main className="flex-1 flex flex-col overflow-y-auto p-3.5 sm:p-5 md:p-6 space-y-3 sm:space-y-6">
           <Outlet />
         </main>
       </div>

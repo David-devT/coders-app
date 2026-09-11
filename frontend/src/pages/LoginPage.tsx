@@ -138,7 +138,7 @@ export default function LoginPage() {
   const isRegister = mode === 'register';
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 relative overflow-hidden bg-background">
       {/* Resplandor ambiental de fondo */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#AB978C]/10 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#6B7C98]/10 rounded-full blur-[140px] pointer-events-none" />
@@ -196,7 +196,7 @@ export default function LoginPage() {
 
         {/* Tarjeta translúcida con formulario de autenticación */}
         <div className="md:col-span-7">
-          <div className={`glass-card p-8 rounded-2xl relative ${shake ? 'animate-shake' : 'animate-fade-in-scale'}`}>
+          <div className={`glass-card p-5 sm:p-8 rounded-2xl relative ${shake ? 'animate-shake' : 'animate-fade-in-scale'}`}>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-11 h-11 rounded-xl bg-[#AB978C]/20 border border-[#AB978C]/40 flex items-center justify-center glow-bronze">
                 <Zap className="w-6 h-6 text-[#AB978C] animate-pulse-soft" />

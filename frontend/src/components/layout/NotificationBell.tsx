@@ -65,7 +65,7 @@ export default function NotificationBell() {
 
       {/* Menú desplegable con listado de notificaciones */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] p-3.5 z-50 animate-in fade-in-0 zoom-in-95 bg-[#14171E] text-foreground ring-1 ring-white/10 border-t-[#AB978C]/40">
+        <div className="fixed right-3 left-3 sm:left-auto top-16 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-96 max-w-sm sm:max-w-none mx-auto sm:mx-0 rounded-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] p-3 sm:p-3.5 z-50 animate-in fade-in-0 zoom-in-95 bg-[#14171E] text-foreground ring-1 ring-white/10 border-t-[#AB978C]/40">
           {/* Cabecera del panel de notificaciones con acciones masivas */}
           <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-white/10 gap-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -84,7 +84,7 @@ export default function NotificationBell() {
                   variant="ghost"
                   size="sm"
                   onClick={() => markAllAsRead.mutate()}
-                  className="h-7 text-[10px] text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/10 px-2 rounded-lg font-semibold"
+                  className="h-8 sm:h-7 text-[10px] text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/10 px-2 rounded-lg font-semibold cursor-pointer"
                   disabled={markAllAsRead.isPending}
                   title="Marcar todas como leídas"
                 >
@@ -98,7 +98,7 @@ export default function NotificationBell() {
                   variant="ghost"
                   size="sm"
                   onClick={() => clearAll.mutate()}
-                  className="h-7 text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2 rounded-lg font-semibold"
+                  className="h-8 sm:h-7 text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2 rounded-lg font-semibold cursor-pointer"
                   disabled={clearAll.isPending}
                   title="Borrar todas las notificaciones"
                 >
@@ -115,7 +115,7 @@ export default function NotificationBell() {
               <button
                 type="button"
                 onClick={() => setActiveTab('all')}
-                className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-semibold transition-all ${
+                className={`flex-1 py-1.5 sm:py-1 px-2 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                   activeTab === 'all'
                     ? 'bg-[#AB978C]/20 text-[#AB978C] shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -126,7 +126,7 @@ export default function NotificationBell() {
               <button
                 type="button"
                 onClick={() => setActiveTab('unread')}
-                className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-semibold transition-all ${
+                className={`flex-1 py-1.5 sm:py-1 px-2 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                   activeTab === 'unread'
                     ? 'bg-[#AB978C]/20 text-[#AB978C] shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -138,7 +138,7 @@ export default function NotificationBell() {
           )}
 
           {/* Lista de notificaciones con texto completo y opción de borrado individual */}
-          <div className="max-h-[360px] overflow-y-auto space-y-2 pr-1">
+          <div className="max-h-[360px] overflow-y-auto space-y-2 pr-1 touch-scroll">
             {displayedNotifications.length === 0 ? (
               <div className="text-center py-8 text-xs text-muted-foreground">
                 <Bell className="w-6 h-6 mx-auto mb-2 text-muted-foreground/40" />
@@ -177,7 +177,7 @@ export default function NotificationBell() {
                             {formatTime(n.createdAt)}
                           </span>
 
-                          {/* Botón para eliminar notificación individual */}
+                          {/* Botón para eliminar notificación individual con área táctil cómoda */}
                           <button
                             type="button"
                             onClick={(e) => {
@@ -185,10 +185,10 @@ export default function NotificationBell() {
                               deleteNotification.mutate(n.id);
                             }}
                             title="Eliminar notificación"
-                            className="p-1 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/15 transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+                            className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-destructive hover:bg-destructive/15 transition-colors sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer min-w-[28px] min-h-[28px] flex items-center justify-center touch-manipulation"
                             disabled={deleteNotification.isPending}
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>

@@ -41,24 +41,25 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
 
   return (
     <>
-      {/* Capa de fondo oscuro para menú móvil desplegado */}
+      {/* Capa de fondo oscuro para menú móvil desplegado con soporte táctil */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 md:hidden transition-opacity"
           onClick={onMobileClose}
+          aria-hidden="true"
         />
       )}
 
-      {/* Contenedor principal de la barra lateral */}
+      {/* Contenedor principal de la barra lateral (w-72 en móvil, w-64 en escritorio) */}
       <aside
-        className={`w-64 glass-panel border-r border-white/5 flex flex-col z-50 shrink-0 fixed inset-y-0 left-0 transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`w-72 max-w-[85vw] md:w-64 glass-panel border-r border-white/5 flex flex-col z-50 shrink-0 fixed inset-y-0 left-0 transition-transform duration-300 md:static md:translate-x-0 ${
           mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
         {/* Encabezado con logotipo de la marca */}
-        <div className="p-5 border-b border-white/5 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#AB978C] to-[#6B7C98] flex items-center justify-center text-[#0E1015] font-extrabold shadow-lg glow-bronze">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#AB978C] to-[#6B7C98] flex items-center justify-center text-[#0E1015] font-extrabold shadow-lg glow-bronze shrink-0">
               <Terminal className="w-5 h-5" />
             </div>
             <div>
@@ -66,11 +67,13 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
               <p className="text-[10px] text-[#7B7F8A] tracking-widest uppercase">Gestión de Equipos</p>
             </div>
           </div>
-          {/* Botón de cierre para vista en móviles */}
+          {/* Botón de cierre para vista en móviles con área táctil accesible */}
           {onMobileClose && (
             <button
+              type="button"
               onClick={onMobileClose}
-              className="md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/5"
+              className="md:hidden w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+              aria-label="Cerrar menú de navegación"
             >
               <X className="w-5 h-5" />
             </button>
@@ -78,7 +81,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
         </div>
 
       {/* Tarjeta de perfil del usuario conectado */}
-      <div className="p-4 mx-3 my-3 rounded-xl glass-card border border-white/5 flex items-center gap-3">
+      <div className="p-3.5 mx-3 my-3 rounded-xl glass-card border border-white/5 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center shrink-0">
           <span className="font-extrabold text-[#AB978C] text-base">
             {user?.name?.charAt(0) || '?'}
@@ -103,8 +106,9 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
             <NavLink
               key={link.to}
               to={link.to}
+              onClick={() => onMobileClose?.()}
               className={({ isActive }) =>
-                `group relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                `group relative flex items-center gap-3 px-3.5 py-3 sm:py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                   isActive
                     ? 'bg-gradient-to-r from-[#AB978C]/20 via-[#AB978C]/10 to-transparent text-[#AB978C] border border-[#AB978C]/30 shadow-[0_4px_20px_rgba(171,151,140,0.12)] font-bold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-[#AB978C]'
                     : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04] border border-transparent'
@@ -123,6 +127,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
             </NavLink>
           ))}
       </nav>
+
 
       {/* Pie con botón de cierre de sesión */}
       <div className="p-3 border-t border-white/5 bg-white/[0.01]">

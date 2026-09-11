@@ -39,7 +39,7 @@ export default function TeamLeaderForm({ open, onClose, onSubmit, teamLeader, is
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
+      <DialogContent className="glass-card border-white/10 p-4 sm:p-6 rounded-2xl w-[calc(100vw-1.5rem)] sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-foreground">
             {teamLeader ? 'Editar Team Leader' : 'Nuevo Team Leader'}

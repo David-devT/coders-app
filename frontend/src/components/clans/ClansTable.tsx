@@ -118,36 +118,36 @@ export default function ClansTable() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Encabezado con título del módulo de Clanes y botón de alta */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
+    <div className="flex-1 flex flex-col space-y-4 sm:space-y-6">
+      {/* Encabezado con título del directorio y acciones */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-3.5 sm:p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#6B7C98]/15 border border-[#6B7C98]/30 flex items-center justify-center glow-slate">
-            <Shield className="w-6 h-6 text-[#6B7C98]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze shrink-0">
+            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-[#AB978C]" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-foreground tracking-tight">Directorio de Clans</h1>
-            <p className="text-xs text-muted-foreground">Grupos de desarrollo y asignación de líderes de equipo</p>
+            <h1 className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight">Directorio de Clanes</h1>
+            <p className="text-[11px] sm:text-xs text-muted-foreground">Grupos de desarrollo y asignación de líderes de equipo</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Botón para exportar el listado a formato CSV */}
           <Button
             onClick={handleExportClansCSV}
             variant="outline"
-            className="h-10 text-xs font-bold rounded-xl border border-white/10 glass-panel text-muted-foreground hover:text-foreground hover:bg-white/5"
+            className="flex-1 sm:flex-initial h-10 text-xs font-bold rounded-xl border border-white/10 glass-panel text-muted-foreground hover:text-foreground hover:bg-white/5 cursor-pointer"
             title="Exportar clanes a CSV"
           >
-            <Download className="w-4 h-4 mr-2 text-[#6B7C98]" />
-            Exportar CSV
+            <Download className="w-4 h-4 mr-1.5 sm:mr-2 text-[#6B7C98]" />
+            <span className="truncate">Exportar CSV</span>
           </Button>
 
           {/* Solo administradores y team leaders pueden crear nuevos clanes */}
           {!isCoder && (
             <Button
               onClick={() => setFormOpen(true)}
-              className="h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all"
+              className="flex-1 sm:flex-initial h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4 mr-2" /> Agregar Clan
             </Button>
@@ -172,107 +172,108 @@ export default function ClansTable() {
           <div className="w-8 h-8 border-2 border-[#6B7C98]/30 border-t-[#6B7C98] rounded-full animate-spin glow-slate" />
         </div>
       ) : (
-        <div className="glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
-          <Table>
-            <TableHeader className="bg-white/5">
-              <TableRow className="hover:bg-transparent border-white/5">
-                <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Nombre Clan</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Descripción</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Team Leader</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground text-center">Coders</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground text-center">Tasks Activas</TableHead>
-                {!isCoder && <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={isCoder ? 6 : 7} className="text-center text-muted-foreground py-12 text-xs">
-                    No se encontraron Clans que coincidan con la búsqueda
-                  </TableCell>
+        <div className="flex-1 flex flex-col justify-between glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl min-h-[360px] sm:min-h-0">
+          <div className="overflow-x-auto touch-scroll">
+            <Table className="min-w-[650px] sm:min-w-full">
+              <TableHeader className="bg-white/5">
+                <TableRow className="hover:bg-transparent border-white/5">
+                  <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Nombre Clan</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Descripción</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Team Leader</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground text-center">Coders</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground text-center">Tasks Activas</TableHead>
+                  {!isCoder && <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>}
                 </TableRow>
-              ) : (
-                paginatedItems?.map((clan, i) => {
-                  // Conteo de tareas técnicas activas en pipeline para este clan
-                  const activeTasksCount = tasks.data?.filter(
-                    (t) => t.clan?.id === clan.id && (t.status === 'pending' || t.status === 'review')
-                  ).length || 0;
+              </TableHeader>
+              <TableBody>
+                {filtered?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={isCoder ? 6 : 7} className="text-center text-muted-foreground py-12 text-xs">
+                      No se encontraron Clans que coincidan con la búsqueda
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedItems?.map((clan, i) => {
+                    // Conteo de tareas técnicas activas en pipeline para este clan
+                    const activeTasksCount = tasks.data?.filter(
+                      (t) => t.clan?.id === clan.id && (t.status === 'pending' || t.status === 'review')
+                    ).length || 0;
 
-                  return (
-                    <TableRow key={clan.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                      <TableCell className="text-xs font-medium text-muted-foreground">{(currentPage - 1) * pageSize + i + 1}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center font-bold text-xs text-[#AB978C]">
-                            {clan.name.charAt(0)}
-                          </div>
-                          <span className="font-bold text-xs text-foreground">{clan.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-xs truncate">
-                        {clan.description || <span className="italic text-muted-foreground/50">Sin descripción</span>}
-                      </TableCell>
-                      <TableCell>
-                        {clan.teamLeader ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-[#6B7C98]">
-                              {clan.teamLeader.name.charAt(0)}
+                    return (
+                      <TableRow key={clan.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                        <TableCell className="text-xs font-medium text-muted-foreground">{(currentPage - 1) * pageSize + i + 1}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center font-bold text-xs text-[#AB978C]">
+                              {clan.name.charAt(0)}
                             </div>
-                            <span className="text-xs text-foreground font-medium">{clan.teamLeader.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-amber-400/80 italic font-medium">Sin Líder Asignado</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#AB978C]/15 text-[#AB978C] border border-[#AB978C]/30">
-                          <Users className="w-3 h-3" />
-                          {clan.coders?.length || 0}
-                        </span>
-                      </TableCell>
-                      {/* Badge con el número de tareas activas del clan */}
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#6B7C98]/15 text-[#6B7C98] border border-[#6B7C98]/30">
-                          <CheckSquare className="w-3 h-3" />
-                          {activeTasksCount}
-                        </span>
-                      </TableCell>
-                      {!isCoder && (
-                        <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="w-8 h-8 text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl"
-                              onClick={() => { setSelectedClan(clan); setFormOpen(true); }}
-                              title="Editar Clan"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl"
-                              onClick={() => { setSelectedClan(clan); setDeleteOpen(true); }}
-                              title="Eliminar Clan"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                            <span className="font-bold text-xs text-foreground">{clan.name}</span>
                           </div>
                         </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+                        <TableCell className="text-xs text-muted-foreground max-w-xs truncate">
+                          {clan.description || <span className="italic text-muted-foreground/50">Sin descripción</span>}
+                        </TableCell>
+                        <TableCell>
+                          {clan.teamLeader ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-[#6B7C98]">
+                                {clan.teamLeader.name.charAt(0)}
+                              </div>
+                              <span className="text-xs font-semibold text-foreground">{clan.teamLeader.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/60 italic">Sin Líder Asignado</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground">
+                            <Users className="w-3 h-3 text-[#AB978C]" />
+                            {clan.coders?.length || 0}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#6B7C98]">
+                            <CheckSquare className="w-3 h-3" />
+                            {activeTasksCount}
+                          </span>
+                        </TableCell>
+                        {!isCoder && (
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl cursor-pointer"
+                                onClick={() => { setSelectedClan(clan); setFormOpen(true); }}
+                                title="Editar Clan"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl cursor-pointer"
+                                onClick={() => { setSelectedClan(clan); setDeleteOpen(true); }}
+                                title="Eliminar Clan"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-          {/* Paginación de clanes */}
+          {/* Paginación de clanes responsiva */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/5 bg-white/[0.02]">
-              <span className="text-xs text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-white/5 bg-white/[0.02]">
+              <span className="text-xs text-muted-foreground text-center sm:text-left">
                 Mostrando <span className="font-semibold text-foreground">{(currentPage - 1) * pageSize + 1}</span> -{' '}
                 <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, totalItems)}</span> de{' '}
                 <span className="font-semibold text-[#6B7C98]">{totalItems}</span> clanes
@@ -283,7 +284,7 @@ export default function ClansTable() {
                   size="sm"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="h-8 px-2.5 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40"
+                  className="h-9 sm:h-8 px-3 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40 cursor-pointer"
                 >
                   <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Anterior
                 </Button>
@@ -295,7 +296,7 @@ export default function ClansTable() {
                   size="sm"
                   disabled={currentPage >= totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="h-8 px-2.5 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40"
+                  className="h-9 sm:h-8 px-3 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40 cursor-pointer"
                 >
                   Siguiente <ChevronRight className="w-3.5 h-3.5 ml-1" />
                 </Button>

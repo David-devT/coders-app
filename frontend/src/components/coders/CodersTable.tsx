@@ -88,16 +88,16 @@ export default function CodersTable() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 flex flex-col space-y-4 sm:space-y-6">
       {/* Encabezado con título del directorio y botón de alta */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-3.5 sm:p-4 rounded-2xl border border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze">
-            <Code2 className="w-6 h-6 text-[#AB978C]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze shrink-0">
+            <Code2 className="w-5 h-5 sm:w-6 sm:h-6 text-[#AB978C]" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-foreground tracking-tight">Directorio de Coders</h1>
-            <p className="text-xs text-muted-foreground">Desarrolladores registrados y miembros de equipo</p>
+            <h1 className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight">Directorio de Coders</h1>
+            <p className="text-[11px] sm:text-xs text-muted-foreground">Desarrolladores registrados y miembros de equipo</p>
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export default function CodersTable() {
         {!isCoder && (
           <Button
             onClick={() => setFormOpen(true)}
-            className="h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all"
+            className="w-full sm:w-auto h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 mr-2" /> Agregar Coder
           </Button>
@@ -113,7 +113,7 @@ export default function CodersTable() {
       </div>
 
       {/* Barra de búsqueda predictiva y filtro por Clan */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -144,81 +144,83 @@ export default function CodersTable() {
           <div className="w-8 h-8 border-2 border-[#AB978C]/30 border-t-[#AB978C] rounded-full animate-spin glow-bronze" />
         </div>
       ) : (
-        <div className="glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
-          <Table>
-            <TableHeader className="bg-white/5">
-              <TableRow className="hover:bg-transparent border-white/5">
-                <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Perfil Coder</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Correo</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground">Clan Asignado</TableHead>
-                {!isCoder && <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={isCoder ? 4 : 5} className="text-center text-muted-foreground py-12 text-xs">
-                    No se encontraron Coders que coincidan con la búsqueda
-                  </TableCell>
+        <div className="flex-1 flex flex-col justify-between glass-panel rounded-2xl overflow-hidden border border-white/5 shadow-2xl min-h-[360px] sm:min-h-0">
+          <div className="overflow-x-auto touch-scroll">
+            <Table className="min-w-[620px] sm:min-w-full">
+              <TableHeader className="bg-white/5">
+                <TableRow className="hover:bg-transparent border-white/5">
+                  <TableHead className="text-xs font-bold text-muted-foreground w-12">#</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Perfil Coder</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Correo</TableHead>
+                  <TableHead className="text-xs font-bold text-muted-foreground">Clan Asignado</TableHead>
+                  {!isCoder && <TableHead className="text-xs font-bold text-muted-foreground text-right">Acciones</TableHead>}
                 </TableRow>
-              ) : (
-                paginatedItems?.map((coder, i) => (
-                  <TableRow key={coder.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                    <TableCell className="text-xs font-medium text-muted-foreground">{(currentPage - 1) * pageSize + i + 1}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-[#6B7C98]/20 border border-[#6B7C98]/35 flex items-center justify-center font-bold text-xs text-[#E9E6E7]">
-                          {coder.name.charAt(0)}
-                        </div>
-                        <span className="font-bold text-xs text-foreground">{coder.name}</span>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {filtered?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={isCoder ? 4 : 5} className="text-center text-muted-foreground py-12 text-xs">
+                      No se encontraron Coders que coincidan con la búsqueda
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{coder.email}</TableCell>
-                    <TableCell>
-                      {coder.clan ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#6B7C98]/15 text-[#6B7C98] border border-[#6B7C98]/30">
-                          <Shield className="w-3 h-3" />
-                          {coder.clan.name}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/60 italic">Sin Asignar</span>
-                      )}
-                    </TableCell>
-                    {!isCoder && (
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-8 h-8 text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl"
-                            onClick={() => { setSelectedCoder(coder); setFormOpen(true); }}
-                            title="Editar Coder"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl"
-                            onClick={() => { setSelectedCoder(coder); setDeleteOpen(true); }}
-                            title="Eliminar Coder"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                  </TableRow>
+                ) : (
+                  paginatedItems?.map((coder, i) => (
+                    <TableRow key={coder.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                      <TableCell className="text-xs font-medium text-muted-foreground">{(currentPage - 1) * pageSize + i + 1}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-[#6B7C98]/20 border border-[#6B7C98]/35 flex items-center justify-center font-bold text-xs text-[#E9E6E7]">
+                            {coder.name.charAt(0)}
+                          </div>
+                          <span className="font-bold text-xs text-foreground">{coder.name}</span>
                         </div>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                      <TableCell className="text-xs text-muted-foreground">{coder.email}</TableCell>
+                      <TableCell>
+                        {coder.clan ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#6B7C98]/15 text-[#6B7C98] border border-[#6B7C98]/30">
+                            <Shield className="w-3 h-3" />
+                            {coder.clan.name}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/60 italic">Sin Asignar</span>
+                        )}
+                      </TableCell>
+                      {!isCoder && (
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-[#AB978C] hover:bg-[#AB978C]/15 rounded-xl cursor-pointer"
+                              onClick={() => { setSelectedCoder(coder); setFormOpen(true); }}
+                              title="Editar Coder"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/15 rounded-xl cursor-pointer"
+                              onClick={() => { setSelectedCoder(coder); setDeleteOpen(true); }}
+                              title="Eliminar Coder"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-          {/* Barra de navegación de páginas */}
+          {/* Barra de navegación de páginas responsiva */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/5 bg-white/[0.02]">
-              <span className="text-xs text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-white/5 bg-white/[0.02]">
+              <span className="text-xs text-muted-foreground text-center sm:text-left">
                 Mostrando <span className="font-semibold text-foreground">{(currentPage - 1) * pageSize + 1}</span> -{' '}
                 <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, totalItems)}</span> de{' '}
                 <span className="font-semibold text-[#AB978C]">{totalItems}</span> coders
@@ -229,7 +231,7 @@ export default function CodersTable() {
                   size="sm"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="h-8 px-2.5 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40"
+                  className="h-9 sm:h-8 px-3 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40 cursor-pointer"
                 >
                   <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Anterior
                 </Button>
@@ -241,7 +243,7 @@ export default function CodersTable() {
                   size="sm"
                   disabled={currentPage >= totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="h-8 px-2.5 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40"
+                  className="h-9 sm:h-8 px-3 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-foreground disabled:opacity-40 cursor-pointer"
                 >
                   Siguiente <ChevronRight className="w-3.5 h-3.5 ml-1" />
                 </Button>

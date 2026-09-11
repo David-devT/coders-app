@@ -126,7 +126,7 @@ export default function TaskCard({ task, onStatusChange, onDelete, onSelect }: T
               <Button
                 variant="ghost"
                 size="icon"
-                className="w-6 h-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                className="w-7 h-7 sm:w-6 sm:h-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(task.id);
@@ -197,7 +197,7 @@ export default function TaskCard({ task, onStatusChange, onDelete, onSelect }: T
             <Button
               size="sm"
               variant="outline"
-              className="w-full text-xs h-7 border-[#6B7C98]/40 text-[#6B7C98] hover:bg-[#6B7C98]/15 rounded-lg font-semibold"
+              className="w-full text-xs h-8 sm:h-7 border-[#6B7C98]/40 text-[#6B7C98] hover:bg-[#6B7C98]/15 rounded-lg font-semibold cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 onStatusChange(task.id, 'review');
@@ -219,7 +219,7 @@ export default function TaskCard({ task, onStatusChange, onDelete, onSelect }: T
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 text-xs h-7 border-[#AB978C]/40 text-[#AB978C] hover:bg-[#AB978C]/15 rounded-lg font-semibold"
+                className="flex-1 text-xs h-8 sm:h-7 border-[#AB978C]/40 text-[#AB978C] hover:bg-[#AB978C]/15 rounded-lg font-semibold cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   onStatusChange(task.id, 'approved');
@@ -231,7 +231,7 @@ export default function TaskCard({ task, onStatusChange, onDelete, onSelect }: T
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 text-xs h-7 border-destructive/40 text-destructive hover:bg-destructive/15 rounded-lg font-semibold"
+                className="flex-1 text-xs h-8 sm:h-7 border-destructive/40 text-destructive hover:bg-destructive/15 rounded-lg font-semibold cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   onStatusChange(task.id, 'rejected');
@@ -266,7 +266,7 @@ export default function TaskCard({ task, onStatusChange, onDelete, onSelect }: T
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs h-7 border-amber-500/40 text-amber-400 hover:bg-amber-500/15 rounded-lg font-semibold"
+                  className="text-xs h-8 sm:h-7 border-amber-500/40 text-amber-400 hover:bg-amber-500/15 rounded-lg font-semibold cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     onStatusChange(task.id, 'pending');

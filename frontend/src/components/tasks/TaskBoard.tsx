@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { useTasks } from '../../hooks/useTasks';
 import { useCoders } from '../../hooks/useCoders';
 import { useClans } from '../../hooks/useClans';
 import TaskColumn from './TaskColumn';
+import TaskCard from './TaskCard';
 import TaskDetailModal from './TaskDetailModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, ListTodo, Loader2, Trash2, RotateCcw, Clock, User, X, Shield, CheckCircle2, Search, Calendar, Download, GitPullRequest } from 'lucide-react';
+import { Plus, ListTodo, Loader2, Trash2, RotateCcw, Clock, User, X, Shield, CheckCircle2, Search, Calendar, Download, GitPullRequest, ChevronRight, AlertTriangle } from 'lucide-react';
 import type { Task, TaskStatus } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -21,6 +22,14 @@ const columns: { title: string; status: TaskStatus; colorClass: string }[] = [
   { title: 'Approved', status: 'approved', colorClass: 'bg-[#AB978C]/20 text-[#AB978C] border-[#AB978C]/35' },
   { title: 'Rejected', status: 'rejected', colorClass: 'bg-[#E05252]/15 text-[#E05252] border-[#E05252]/30' },
 ];
+
+// Iconos vectoriales de estado para cabeceras y vistas móviles
+const statusIcons: Record<TaskStatus, ReactNode> = {
+  pending: <Clock className="w-3.5 h-3.5 text-[#E9E6E7]" />,
+  review: <Search className="w-3.5 h-3.5 text-[#6B7C98]" />,
+  approved: <CheckCircle2 className="w-3.5 h-3.5 text-[#AB978C]" />,
+  rejected: <AlertTriangle className="w-3.5 h-3.5 text-[#E05252]" />,
+};
 
 // Tablero interactivo Kanban para gestión y supervisión de tareas técnicas
 export default function TaskBoard() {
@@ -37,6 +46,7 @@ export default function TaskBoard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClanFilter, setSelectedClanFilter] = useState('all');
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState('all');
+  const [activeMobileColumn, setActiveMobileColumn] = useState<'all' | TaskStatus>('all');
 
   const [newTask, setNewTask] = useState({
     title: '',
@@ -223,78 +233,118 @@ export default function TaskBoard() {
   const totalClans = clans.data?.length || 0;
 
   return (
-    <div className="space-y-6">
-      {/* Resumen de métricas clave KPI */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Resumen de métricas clave KPI (Desktop: 4 tarjetas tradicionales) */}
+      <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="kpi-card p-3 sm:p-4 rounded-2xl border flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs text-[#7B7F8A]">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Coders Activos</span>
             <span className="w-2 h-2 rounded-full bg-[#AB978C] animate-pulse" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-foreground">{totalCoders}</span>
-            <span className="text-[11px] text-[#AB978C] font-semibold">en plataforma</span>
+          <div className="mt-2 flex items-baseline gap-1.5 sm:gap-2">
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-foreground">{totalCoders}</span>
+            <span className="text-[10px] sm:text-[11px] text-[#AB978C] font-semibold">en plataforma</span>
           </div>
         </div>
 
-        <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
+        <div className="kpi-card p-3 sm:p-4 rounded-2xl border flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs text-[#7B7F8A]">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Clanes Activos</span>
             <Shield className="w-3.5 h-3.5 text-[#6B7C98]" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-foreground">{totalClans}</span>
-            <span className="text-[11px] text-[#7B7F8A] font-semibold">unidades técnicas</span>
+          <div className="mt-2 flex items-baseline gap-1.5 sm:gap-2">
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-foreground">{totalClans}</span>
+            <span className="text-[10px] sm:text-[11px] text-[#7B7F8A] font-semibold">unidades técnicas</span>
           </div>
         </div>
 
-        <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
+        <div className="kpi-card p-3 sm:p-4 rounded-2xl border flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs text-[#7B7F8A]">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Tasks en Pipeline</span>
             <Clock className="w-3.5 h-3.5 text-[#6B7C98]" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-[#6B7C98]">{pipelineTasks}</span>
-            <span className="text-[11px] text-[#7B7F8A] font-semibold">de {totalTasks} totales</span>
+          <div className="mt-2 flex items-baseline gap-1.5 sm:gap-2">
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#6B7C98]">{pipelineTasks}</span>
+            <span className="text-[10px] sm:text-[11px] text-[#7B7F8A] font-semibold">de {totalTasks}</span>
           </div>
         </div>
 
-        <div className="kpi-card p-4 rounded-2xl border flex flex-col justify-between">
+        <div className="kpi-card p-3 sm:p-4 rounded-2xl border flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs text-[#AB978C]">
             <span className="font-semibold uppercase tracking-wider text-[10px] text-[#AB978C]">Tasa Aprobación</span>
             <CheckCircle2 className="w-3.5 h-3.5 text-[#AB978C]" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-[#AB978C] drop-shadow-[0_0_12px_rgba(171,151,140,0.35)]">
+          <div className="mt-2 flex items-baseline gap-1.5 sm:gap-2">
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#AB978C] drop-shadow-[0_0_12px_rgba(171,151,140,0.35)]">
               {approvalRate}%
             </span>
-            <span className="text-[11px] text-[#E9E6E7] font-semibold">{approvedTasks} completadas</span>
+            <span className="text-[10px] sm:text-[11px] text-[#E9E6E7] font-semibold">{approvedTasks} completadas</span>
           </div>
         </div>
       </div>
 
+      {/* Resumen de métricas clave KPI (Móvil: Barra compacta que ahorra +250px verticales) */}
+      <div className="sm:hidden grid grid-cols-4 gap-2 p-2 bg-white/[0.03] border border-white/5 rounded-2xl text-center">
+        <div className="p-1.5 rounded-xl bg-white/[0.02]">
+          <span className="text-[10px] text-[#7B7F8A] block uppercase font-bold">Coders</span>
+          <span className="text-sm font-extrabold text-foreground">{totalCoders}</span>
+        </div>
+        <div className="p-1.5 rounded-xl bg-white/[0.02]">
+          <span className="text-[10px] text-[#7B7F8A] block uppercase font-bold">Clanes</span>
+          <span className="text-sm font-extrabold text-foreground">{totalClans}</span>
+        </div>
+        <div className="p-1.5 rounded-xl bg-[#6B7C98]/10">
+          <span className="text-[10px] text-[#6B7C98] block uppercase font-bold">Pipeline</span>
+          <span className="text-sm font-extrabold text-[#6B7C98]">{pipelineTasks}</span>
+        </div>
+        <div className="p-1.5 rounded-xl bg-[#AB978C]/15">
+          <span className="text-[10px] text-[#AB978C] block uppercase font-bold">Aprobadas</span>
+          <span className="text-sm font-extrabold text-[#AB978C]">{approvalRate}%</span>
+        </div>
+      </div>
+
       {/* Cabecera del tablero con acciones de crear y papelera */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze">
-            <ListTodo className="w-6 h-6 text-[#AB978C]" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-3 sm:p-4 rounded-2xl border border-white/5">
+        <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#AB978C]/15 border border-[#AB978C]/30 flex items-center justify-center glow-bronze shrink-0">
+              <ListTodo className="w-5 h-5 sm:w-6 sm:h-6 text-[#AB978C]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-xl font-extrabold text-foreground tracking-tight">Kanban Task Board</h1>
+                <span className="sm:hidden px-2 py-0.5 rounded-full bg-[#AB978C]/20 text-[#AB978C] font-bold text-[10px]">
+                  {totalTasks}
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-muted-foreground hidden sm:block">Supervisa y gestiona entregables de equipos a través del flujo de estados</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-foreground tracking-tight">Kanban Task Board</h1>
-            <p className="text-xs text-muted-foreground">Supervisa y gestiona entregables de equipos a través del flujo de estados</p>
-          </div>
+
+          {/* Botón rápido Nueva Task para móvil en la cabecera */}
+          {canCreateTasks && (
+            <div className="sm:hidden">
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                size="sm"
+                className="h-9 px-3 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Nueva Task
+              </Button>
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Botón para exportar reporte de tareas en CSV */}
           <Button
             onClick={handleExportCSV}
             variant="outline"
-            className="h-10 text-xs font-bold rounded-xl border border-white/10 glass-panel text-muted-foreground hover:text-foreground hover:bg-white/5"
+            className="flex-1 sm:flex-initial h-9 sm:h-10 text-xs font-bold rounded-xl border border-white/10 glass-panel text-muted-foreground hover:text-foreground hover:bg-white/5 cursor-pointer"
             title="Exportar tareas visibles a CSV"
           >
-            <Download className="w-4 h-4 mr-2 text-[#6B7C98]" />
-            Exportar CSV
+            <Download className="w-4 h-4 mr-1.5 sm:mr-2 text-[#6B7C98]" />
+            <span className="truncate">Exportar CSV</span>
           </Button>
 
           {/* Botón para ver tareas eliminadas (solo administradores) */}
@@ -302,29 +352,31 @@ export default function TaskBoard() {
             <Button
               onClick={() => setShowDeleted(!showDeleted)}
               variant="outline"
-              className={`h-10 text-xs font-bold rounded-xl border ${
+              className={`flex-1 sm:flex-initial h-9 sm:h-10 text-xs font-bold rounded-xl border cursor-pointer ${
                 showDeleted
                   ? 'bg-destructive/15 text-destructive border-destructive/40'
                   : 'glass-panel text-muted-foreground hover:text-destructive hover:bg-destructive/10'
               }`}
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Tasks Eliminadas ({tasksDeleted.data?.length || 0})
+              <Trash2 className="w-4 h-4 mr-1.5 sm:mr-2" />
+              <span className="truncate">Eliminadas ({tasksDeleted.data?.length || 0})</span>
             </Button>
           )}
 
-          {/* Diálogo modal para registrar una nueva tarea técnica */}
+          {/* Botón Desktop Nueva Task */}
           {canCreateTasks && (
-            <>
-              <Button
-                onClick={() => setIsDialogOpen(true)}
-                className="h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nueva Task
-              </Button>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="glass-card border-white/10 p-6 rounded-2xl max-w-md">
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="hidden sm:inline-flex w-full sm:w-auto h-10 bg-[#AB978C] hover:bg-[#AB978C]/90 text-[#0E1015] font-extrabold text-xs rounded-xl shadow-lg glow-bronze transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nueva Task
+            </Button>
+          )}
+
+          {canCreateTasks && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="glass-card border-white/10 p-5 sm:p-6 rounded-2xl w-[calc(100vw-1.5rem)] max-w-md max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-lg font-bold text-foreground">Crear Nueva Task</DialogTitle>
                   </DialogHeader>
@@ -436,7 +488,6 @@ export default function TaskBoard() {
                   </div>
                 </DialogContent>
               </Dialog>
-            </>
           )}
         </div>
       </div>
@@ -496,7 +547,7 @@ export default function TaskBoard() {
       )}
 
       {/* Barra de Filtros Rápidos (Búsqueda predictiva, Clan y Prioridad) */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 glass-panel p-3 rounded-2xl border border-white/5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 glass-panel p-3 rounded-2xl border border-white/5">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -512,7 +563,7 @@ export default function TaskBoard() {
           <select
             value={selectedClanFilter}
             onChange={(e) => setSelectedClanFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30 bg-[#14171E] min-w-[140px]"
+            className="flex-1 sm:flex-initial h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30 bg-[#14171E] min-w-[130px]"
           >
             <option value="all">Todos los Clanes</option>
             {clans.data?.map((c) => (
@@ -526,7 +577,7 @@ export default function TaskBoard() {
           <select
             value={selectedPriorityFilter}
             onChange={(e) => setSelectedPriorityFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30 bg-[#14171E] min-w-[130px]"
+            className="flex-1 sm:flex-initial h-10 px-3 rounded-xl glass-input text-xs text-foreground focus:border-[#AB978C] focus:ring-1 focus:ring-[#AB978C]/30 bg-[#14171E] min-w-[130px]"
           >
             <option value="all">Todas las Prioridades</option>
             <option value="high" className="bg-[#14171E] text-[#E05252]">Alta (High)</option>
@@ -544,7 +595,7 @@ export default function TaskBoard() {
                 setSelectedClanFilter('all');
                 setSelectedPriorityFilter('all');
               }}
-              className="h-10 px-3 text-xs text-muted-foreground hover:text-[#AB978C] rounded-xl shrink-0"
+              className="h-10 px-3 text-xs text-muted-foreground hover:text-[#AB978C] rounded-xl shrink-0 cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5 mr-1" />
               Limpiar
@@ -553,20 +604,126 @@ export default function TaskBoard() {
         </div>
       </div>
 
-      {/* Cuadrícula de columnas del tablero Kanban */}
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      {/* Selector de columnas para dispositivos móviles (oculto en PC) */}
+      <div className="flex sm:hidden items-center gap-1.5 p-1 bg-white/[0.03] border border-white/5 rounded-xl overflow-x-auto touch-scroll">
+        <button
+          type="button"
+          onClick={() => setActiveMobileColumn('all')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            activeMobileColumn === 'all'
+              ? 'bg-[#AB978C]/20 text-[#AB978C] border border-[#AB978C]/40 shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Todas ({tasks.data?.length || 0})
+        </button>
+        {columns.map((col) => {
+          const count = tasksByStatus(col.status).length;
+          const isActive = activeMobileColumn === col.status;
+          return (
+            <button
+              key={col.status}
+              type="button"
+              onClick={() => setActiveMobileColumn(col.status)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                isActive
+                  ? 'bg-[#AB978C]/20 text-[#AB978C] border border-[#AB978C]/40 shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>{col.title}</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-black/40 text-[10px]">
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* VISTA MÓVIL DE TAREAS (sm:hidden): Fácil acceso vertical a todas las tareas */}
+      <div className="block sm:hidden space-y-4">
+        {activeMobileColumn === 'all' ? (
+          /* MODO TODAS: Lista vertical organizada por secciones para ver todas las tareas con 1 dedo */
+          <div className="space-y-3.5">
+            {columns.map((col) => {
+              const colTasks = tasksByStatus(col.status);
+              return (
+                <div key={col.status} className="glass-panel rounded-2xl overflow-hidden border border-white/5">
+                  <div
+                    onClick={() => setActiveMobileColumn(col.status)}
+                    className={`flex items-center justify-between px-3.5 py-2.5 border-b border-white/5 cursor-pointer ${col.colorClass}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {statusIcons[col.status]}
+                      <h3 className="font-extrabold text-xs uppercase tracking-wider">{col.title}</h3>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-black/40 border border-white/10">
+                        {colTasks.length}
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+                    </div>
+                  </div>
+
+                  <div className="p-3 space-y-2.5">
+                    {colTasks.length === 0 ? (
+                      <p className="text-center py-4 text-xs text-muted-foreground/60 italic">
+                        Sin tasks en {col.title}
+                      </p>
+                    ) : (
+                      colTasks.map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onStatusChange={handleStatusChange}
+                          onDelete={isAdmin ? handleDelete : undefined}
+                          onSelect={(t) => setSelectedTask(t)}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* MODO COLUMNA ESPECÍFICA: 100% de ancho móvil limpio sin recortes adyacentes */
+          <div className="w-full">
+            {(() => {
+              const activeCol = columns.find((c) => c.status === activeMobileColumn);
+              if (!activeCol) return null;
+              return (
+                <TaskColumn
+                  title={activeCol.title}
+                  status={activeCol.status}
+                  tasks={tasksByStatus(activeCol.status)}
+                  colorClass={activeCol.colorClass}
+                  onStatusChange={handleStatusChange}
+                  onDelete={isAdmin ? handleDelete : undefined}
+                  onDropTask={handleDropTask}
+                  onSelectTask={(t) => setSelectedTask(t)}
+                />
+              );
+            })()}
+          </div>
+        )}
+      </div>
+
+      {/* VISTA TRADICIONAL DE ESCRITORIO (hidden sm:flex): 4 Columnas Kanban Horizontales INTACTAS */}
+      <div className="hidden sm:flex gap-4 overflow-x-auto pb-4 touch-scroll">
         {columns.map((col) => (
-          <TaskColumn
-            key={col.status}
-            title={col.title}
-            status={col.status}
-            tasks={tasksByStatus(col.status)}
-            colorClass={col.colorClass}
-            onStatusChange={handleStatusChange}
-            onDelete={isAdmin ? handleDelete : undefined}
-            onDropTask={handleDropTask}
-            onSelectTask={(t) => setSelectedTask(t)}
-          />
+          <div key={col.status} className="flex-1 min-w-[290px]">
+            <TaskColumn
+              title={col.title}
+              status={col.status}
+              tasks={tasksByStatus(col.status)}
+              colorClass={col.colorClass}
+              onStatusChange={handleStatusChange}
+              onDelete={isAdmin ? handleDelete : undefined}
+              onDropTask={handleDropTask}
+              onSelectTask={(t) => setSelectedTask(t)}
+            />
+          </div>
         ))}
       </div>
 

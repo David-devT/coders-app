@@ -62,7 +62,7 @@ export default function TaskColumn({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`flex-1 min-w-[290px] flex flex-col glass-panel rounded-2xl overflow-hidden border transition-all duration-200 ${
+      className={`w-full flex-1 flex flex-col glass-panel rounded-2xl overflow-hidden border transition-all duration-200 ${
         isDragOver
           ? 'border-[#AB978C] ring-2 ring-[#AB978C]/40 bg-[#AB978C]/5 scale-[1.01]'
           : 'border-white/5'
@@ -81,7 +81,7 @@ export default function TaskColumn({
 
 
       {/* Lista contenedora de tarjetas de tareas */}
-      <div className="flex-1 p-3 space-y-3 overflow-y-auto min-h-[350px]">
+      <div className="flex-1 p-3 space-y-3 overflow-y-auto sm:min-h-[350px]">
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-muted-foreground/60 text-xs border border-dashed border-white/5 rounded-xl">
             <p>Sin tasks en {title}</p>
