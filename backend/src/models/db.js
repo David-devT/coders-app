@@ -3,10 +3,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pushToSupabase, pullFromSupabase, isSupabaseConfigured } from '../config/supabase.js';
 
-// Directorio base de almacenamiento de datos JSON
+// Directorio base de almacenamiento de datos JSON con soporte para serverless (/tmp en Vercel)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.resolve(__dirname, '..', 'data');
+const isVercel = Boolean(process.env.VERCEL);
+const BUNDLED_DATA_DIR = path.resolve(__dirname, '..', 'data');
+const DATA_DIR = isVercel ? path.join('/tmp', 'coders-data') : BUNDLED_DATA_DIR;
 
 // Crea el directorio de datos si no existe en el sistema de archivos
 function ensureDataDir() {
@@ -18,9 +20,18 @@ function ensureDataDir() {
 // Lee una colección JSON del almacenamiento local y la convierte en arreglo de objetos
 export function readJSON(filename) {
   ensureDataDir();
-  const filePath = path.join(DATA_DIR, filename);
+  let filePath = path.join(DATA_DIR, filename);
   if (!fs.existsSync(filePath)) {
-    return [];
+    if (isVercel) {
+      const bundledPath = path.join(BUNDLED_DATA_DIR, filename);
+      if (fs.existsSync(bundledPath)) {
+        filePath = bundledPath;
+      } else {
+        return [];
+      }
+    } else {
+      return [];
+    }
   }
 
   try {
